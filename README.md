@@ -122,18 +122,6 @@ OpenCode <-> MCP Server (Python) <-> Proxy (Node) <-> UXP Plugin <-> Photoshop
 
 Forked from [mikechambers/adb-mcp](https://github.com/mikechambers/adb-mcp). Extended from 50 to 323 tools with full filter/effect coverage.
 
-## Changelog
-
-### v1.1.0
-
-- Split monolithic skill into 7 on-demand skills (saves context window)
-- 323 tools documented across 36 categories
-- Simplified README
-
-### v1.0.0
-
-- Initial release with 171 tools
-
 ## License
 
 MIT
