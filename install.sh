@@ -4,11 +4,8 @@ set -e
 echo "Installing 00bx-photoshop-mcp..."
 
 # Get the package installation directory (where npm installed the package)
-if [ -n "$npm_package_json" ]; then
-    PACKAGE_DIR="$(dirname "$npm_package_json")"
-else
-    PACKAGE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-fi
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || realpath "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")"
+PACKAGE_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
 
 # Target installation directory
 INSTALL_DIR="$HOME/.00bx-photoshop-mcp"
