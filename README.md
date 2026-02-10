@@ -19,7 +19,6 @@ MCP server for Adobe Photoshop control via AI. Forked from [mikechambers/adb-mcp
 
 Before installing, ensure you have:
 
-- **macOS** (Windows/Linux support coming soon)
 - **Adobe Photoshop 2025/2026** installed
 - **Adobe UXP Developer Tool** (install from Creative Cloud)
 - **Python 3.10+** installed
