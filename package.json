@@ -1,14 +1,14 @@
 {
   "name": "00bx-photoshop-mcp",
-  "version": "1.0.3",
-  "description": "MCP server for Adobe Photoshop control via AI. 171 tools for design automation.",
+  "version": "1.1.0",
+  "description": "MCP server for Adobe Photoshop. 323 tools + 7 AI skills for design automation.",
   "main": "index.js",
   "bin": {
     "00bx-photoshop-mcp": "index.js",
     "00bx-photoshop-mcp-install": "install.sh"
   },
   "scripts": {
-    "postinstall": "echo '========================================' && echo '  00bx-photoshop-mcp installed!' && echo '========================================' && echo '' && echo 'Run the installer to complete setup:' && echo '' && echo '  00bx-photoshop-mcp-install' && echo '' && echo 'This will also install the OpenCode skill!' && echo ''"
+    "postinstall": "echo '' && echo '   ____  ____  ____ _  __' && echo '  / __ \\/ __ \\/ __ ) |/ /' && echo ' / / / / / / / __  |   / ' && echo '/ /_/ / /_/ / /_/ /   |  ' && echo '\\____/\\____/_____/_/|_|  ' && echo '' && echo '  photoshop-mcp v1.1.0' && echo '  ─────────────────────────────' && echo '  323 tools · 7 AI skills · batchPlay' && echo '' && echo '  Next step:' && echo '    00bx-photoshop-mcp-install' && echo '' && echo '  github.com/00bx/00bx-photoshop-mcp' && echo ''"
   },
   "keywords": [
     "mcp",
@@ -21,7 +21,8 @@
     "creative",
     "graphics",
     "image-editing",
-    "firefly"
+    "firefly",
+    "batchplay"
   ],
   "author": "00bx",
   "license": "MIT",
@@ -36,9 +37,6 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "os": [
-    "darwin"
-  ],
   "files": [
     "mcp/",
     "uxp/",

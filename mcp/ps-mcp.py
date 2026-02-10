@@ -3372,7 +3372,7 @@ def _select_layer_bp(layer_id: int):
 # =============================================================================
 
 @mcp.tool()
-def execute_batchplay(commands: list) -> dict:
+def execute_batchplay(commands: list, layer_id: int = None) -> dict:
     """
     Execute arbitrary Photoshop batchPlay commands. This is the most powerful tool —
     it can do ANYTHING Photoshop can do by sending raw batchPlay descriptors directly.
@@ -3383,6 +3383,8 @@ def execute_batchplay(commands: list) -> dict:
     Args:
         commands: A list of batchPlay descriptor dicts. Each dict represents one Photoshop
                   action. Example: [{"_obj": "gaussianBlur", "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}], "radius": {"_unit": "pixelsUnit", "_value": 5.0}}]
+        layer_id: Optional layer ID to select before executing commands. When provided,
+                  the target layer is selected first (same pattern as all working tools).
 
     Returns:
         dict: The result from Photoshop after executing the command(s).
@@ -3390,9 +3392,17 @@ def execute_batchplay(commands: list) -> dict:
     if not commands:
         raise ValueError("commands list cannot be empty")
 
+    # Select target layer first if provided (matches pattern of all working tools)
+    if layer_id is not None:
+        _select_layer_bp(layer_id)
+
+    opts = {"commands": commands}
+    if layer_id is not None:
+        opts["layerId"] = layer_id
+
     command = createCommand(
         "executeBatchPlayCommand",
-        {"commands": commands}
+        opts
     )
     return sendCommand(command)
 
@@ -3909,6 +3919,3304 @@ def apply_pinch(layer_id: int, amount: int = 50) -> dict:
         "amount": amount,
         "_isCommand": True
     }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# ======================= NEW TOOLS BATCH 1: FILTERS ==========================
+# =============================================================================
+
+
+# =============================================================================
+# WIND FILTER
+# =============================================================================
+
+@mcp.tool()
+def apply_wind(layer_id: int, method: str = "wind", direction: str = "fromTheRight") -> dict:
+    """
+    Applies Wind filter for motion/blast effects.
+
+    Args:
+        layer_id: ID of the layer
+        method: 'wind', 'blast', or 'stagger'. Default 'wind'.
+        direction: 'fromTheRight', 'fromTheLeft'. Default 'fromTheRight'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "wind",
+        "windMethod": {"_enum": "windMethod", "_value": method},
+        "direction": {"_enum": "direction", "_value": direction},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# SMART BLUR FILTER
+# =============================================================================
+
+@mcp.tool()
+def apply_smart_blur(layer_id: int, radius: float = 5.0, threshold: float = 25.0, quality: str = "medium", mode: str = "normal") -> dict:
+    """
+    Applies Smart Blur filter. Blurs areas of similar tone while preserving edges.
+
+    Args:
+        layer_id: ID of the layer
+        radius: Blur radius (0.1-100). Default 5.0.
+        threshold: Tonal threshold (0.1-100). Default 25.0.
+        quality: 'low', 'medium', or 'high'. Default 'medium'.
+        mode: 'normal', 'edgeOnly', or 'overlayEdge'. Default 'normal'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "smartBlur",
+        "radius": radius,
+        "threshold": threshold,
+        "smartBlurQuality": {"_enum": "smartBlurQuality", "_value": quality},
+        "smartBlurMode": {"_enum": "smartBlurMode", "_value": mode},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# BOX BLUR FILTER
+# =============================================================================
+
+@mcp.tool()
+def apply_box_blur(layer_id: int, radius: int = 5) -> dict:
+    """
+    Applies Box Blur filter. Creates a flat, uniform blur.
+
+    Args:
+        layer_id: ID of the layer
+        radius: Blur radius in pixels (1-999). Default 5.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "boxblur",
+        "radius": {"_unit": "pixelsUnit", "_value": float(radius)},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# SHAPE BLUR FILTER
+# =============================================================================
+
+@mcp.tool()
+def apply_shape_blur(layer_id: int, radius: int = 5) -> dict:
+    """
+    Applies Shape Blur filter using a custom kernel shape.
+
+    Args:
+        layer_id: ID of the layer
+        radius: Blur radius in pixels (1-1000). Default 5.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "shapeBlur",
+        "radius": radius,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# AVERAGE BLUR FILTER
+# =============================================================================
+
+@mcp.tool()
+def apply_average_blur(layer_id: int) -> dict:
+    """
+    Applies Average Blur. Fills the layer/selection with the average color of all pixels.
+
+    Args:
+        layer_id: ID of the layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "average",
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# FIELD BLUR (Blur Gallery)
+# =============================================================================
+
+@mcp.tool()
+def apply_field_blur(layer_id: int, blur_amount: int = 15) -> dict:
+    """
+    Applies Field Blur (Blur Gallery). Uniform blur across the image with adjustable amount.
+
+    Args:
+        layer_id: ID of the layer
+        blur_amount: Blur amount in pixels (0-500). Default 15.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "bokehImageGalleryBlur",
+        "fieldBlur": {"_unit": "pixelsUnit", "_value": float(blur_amount)},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# DIFFUSE GLOW FILTER
+# =============================================================================
+
+@mcp.tool()
+def apply_diffuse_glow(layer_id: int, graininess: int = 6, glow_amount: int = 10, clear_amount: int = 15) -> dict:
+    """
+    Applies Diffuse Glow filter. Adds dreamy, soft glow using background color.
+
+    Args:
+        layer_id: ID of the layer
+        graininess: Grain amount (0-10). Default 6.
+        glow_amount: Glow intensity (0-20). Default 10.
+        clear_amount: Clear area amount (0-20). Default 15.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "filterGallery",
+        "filterGallery": {
+            "_obj": "filterGallery",
+            "filterRecord": [{
+                "_obj": "diffuseGlow",
+                "graininess": graininess,
+                "glowAmount": glow_amount,
+                "clearAmount": clear_amount
+            }]
+        },
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# GLOWING EDGES FILTER
+# =============================================================================
+
+@mcp.tool()
+def apply_glowing_edges(layer_id: int, edge_width: int = 2, edge_brightness: int = 6, smoothness: int = 5) -> dict:
+    """
+    Applies Glowing Edges filter. Creates neon-like edge outlines.
+
+    Args:
+        layer_id: ID of the layer
+        edge_width: Width of edges (1-14). Default 2.
+        edge_brightness: Brightness of edges (0-20). Default 6.
+        smoothness: Smoothness (1-15). Default 5.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "filterGallery",
+        "filterGallery": {
+            "_obj": "filterGallery",
+            "filterRecord": [{
+                "_obj": "glowingEdges",
+                "edgeWidth": edge_width,
+                "edgeBrightness": edge_brightness,
+                "smoothness": smoothness
+            }]
+        },
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# TILES FILTER
+# =============================================================================
+
+@mcp.tool()
+def apply_tiles(layer_id: int, number_of_tiles: int = 10, maximum_offset: int = 14, fill_empty: str = "backgroundColor") -> dict:
+    """
+    Applies Tiles filter. Breaks image into tiles with offset.
+
+    Args:
+        layer_id: ID of the layer
+        number_of_tiles: Number of tiles (1-99). Default 10.
+        maximum_offset: Max offset percent (1-99). Default 14.
+        fill_empty: Fill for empty areas: 'backgroundColor', 'foregroundColor', 'inverseImage', 'unalteredImage'. Default 'backgroundColor'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "tiles",
+        "numberOfTiles": number_of_tiles,
+        "maximumOffset": maximum_offset,
+        "fillEmptyArea": {"_enum": "fillEmptyArea", "_value": fill_empty},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# TRACE CONTOUR FILTER
+# =============================================================================
+
+@mcp.tool()
+def apply_trace_contour(layer_id: int, level: int = 128, edge: str = "lower") -> dict:
+    """
+    Applies Trace Contour filter. Traces edges at a brightness level.
+
+    Args:
+        layer_id: ID of the layer
+        level: Brightness level to trace (0-255). Default 128.
+        edge: 'lower' or 'upper'. Default 'lower'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "traceContour",
+        "level": level,
+        "edge": {"_enum": "edge", "_value": edge},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# EXTRUDE FILTER
+# =============================================================================
+
+@mcp.tool()
+def apply_extrude(layer_id: int, extrude_type: str = "blocks", size: int = 30, depth: int = 30, solid_front: bool = True, mask_incomplete: bool = False) -> dict:
+    """
+    Applies Extrude filter. Creates 3D blocks or pyramids from image.
+
+    Args:
+        layer_id: ID of the layer
+        extrude_type: 'blocks' or 'pyramids'. Default 'blocks'.
+        size: Size of elements (2-255). Default 30.
+        depth: Depth (1-255). Default 30.
+        solid_front: Fill front faces with solid color. Default True.
+        mask_incomplete: Mask incomplete blocks. Default False.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "extrude",
+        "extrudeType": {"_enum": "extrudeType", "_value": extrude_type},
+        "extrudeSize": size,
+        "extrudeDepth": depth,
+        "extrudeSolidFace": solid_front,
+        "extrudeMaskIncomplete": mask_incomplete,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# ARTISTIC FILTERS
+# =============================================================================
+
+@mcp.tool()
+def apply_colored_pencil(layer_id: int, pencil_width: int = 4, stroke_pressure: int = 8, paper_brightness: int = 25) -> dict:
+    """
+    Applies Colored Pencil artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        pencil_width: Width of pencil strokes (1-24). Default 4.
+        stroke_pressure: Pressure of strokes (0-15). Default 8.
+        paper_brightness: Paper brightness (0-50). Default 25.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "coloredPencil",
+        "pencilWidth": pencil_width,
+        "strokePressure": stroke_pressure,
+        "paperBrightness": paper_brightness,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_cutout(layer_id: int, number_of_levels: int = 4, edge_simplicity: int = 4, edge_fidelity: int = 2) -> dict:
+    """
+    Applies Cutout artistic filter. Creates a paper cutout appearance.
+
+    Args:
+        layer_id: ID of the layer
+        number_of_levels: Number of levels (2-8). Default 4.
+        edge_simplicity: Edge simplicity (0-10). Default 4.
+        edge_fidelity: Edge fidelity (1-3). Default 2.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "cutout",
+        "numberOfLevels": number_of_levels,
+        "edgeSimplicity": edge_simplicity,
+        "edgeFidelity": edge_fidelity,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_dry_brush(layer_id: int, brush_size: int = 2, brush_detail: int = 8, texture: int = 1) -> dict:
+    """
+    Applies Dry Brush artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        brush_size: Brush size (0-10). Default 2.
+        brush_detail: Detail (0-10). Default 8.
+        texture: Texture (1-3). Default 1.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "dryBrush",
+        "brushSize": brush_size,
+        "brushDetail": brush_detail,
+        "texture": texture,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_film_grain(layer_id: int, grain: int = 4, highlight_area: int = 0, intensity: int = 10) -> dict:
+    """
+    Applies Film Grain artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        grain: Grain amount (0-20). Default 4.
+        highlight_area: Highlight area (0-20). Default 0.
+        intensity: Intensity (0-10). Default 10.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "filmGrain",
+        "grain": grain,
+        "highlightArea": highlight_area,
+        "intensity": intensity,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_fresco(layer_id: int, brush_size: int = 2, brush_detail: int = 8, texture: int = 1) -> dict:
+    """
+    Applies Fresco artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        brush_size: Brush size (0-10). Default 2.
+        brush_detail: Detail (0-10). Default 8.
+        texture: Texture (1-3). Default 1.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "fresco",
+        "brushSize": brush_size,
+        "brushDetail": brush_detail,
+        "texture": texture,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_neon_glow(layer_id: int, glow_size: int = 5, glow_brightness: int = 15, glow_color_red: int = 228, glow_color_green: int = 60, glow_color_blue: int = 220) -> dict:
+    """
+    Applies Neon Glow artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        glow_size: Size of glow (-24 to 24). Default 5.
+        glow_brightness: Brightness (0-50). Default 15.
+        glow_color_red: Glow color red (0-255). Default 228.
+        glow_color_green: Glow color green (0-255). Default 60.
+        glow_color_blue: Glow color blue (0-255). Default 220.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "neonGlow",
+        "glowSize": glow_size,
+        "glowBrightness": glow_brightness,
+        "glowColor": {
+            "_obj": "RGBColor",
+            "red": glow_color_red,
+            "grain": glow_color_green,
+            "blue": glow_color_blue
+        },
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_paint_daubs(layer_id: int, brush_size: int = 8, sharpness: int = 7, brush_type: str = "simple") -> dict:
+    """
+    Applies Paint Daubs artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        brush_size: Brush size (1-50). Default 8.
+        sharpness: Sharpness (0-40). Default 7.
+        brush_type: 'simple', 'lightRough', 'darkRough', 'wideSharp', 'wideBlurry', 'sparkle'. Default 'simple'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "paintDaubs",
+        "brushSize": brush_size,
+        "sharpness": sharpness,
+        "brushType": {"_enum": "brushType", "_value": brush_type},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_palette_knife(layer_id: int, stroke_size: int = 12, stroke_detail: int = 3, softness: int = 0) -> dict:
+    """
+    Applies Palette Knife artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        stroke_size: Stroke size (1-50). Default 12.
+        stroke_detail: Stroke detail (1-3). Default 3.
+        softness: Softness (0-10). Default 0.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "paletteKnife",
+        "strokeSize": stroke_size,
+        "strokeDetail": stroke_detail,
+        "softness": softness,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_poster_edges(layer_id: int, edge_thickness: int = 2, edge_intensity: int = 1, posterization: int = 2) -> dict:
+    """
+    Applies Poster Edges artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        edge_thickness: Edge thickness (0-10). Default 2.
+        edge_intensity: Edge intensity (0-10). Default 1.
+        posterization: Posterization (0-6). Default 2.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "posterEdges",
+        "edgeThickness": edge_thickness,
+        "edgeIntensity": edge_intensity,
+        "posterization": posterization,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_rough_pastels(layer_id: int, stroke_length: int = 6, stroke_detail: int = 4, texture: str = "canvas", scaling: int = 100, relief: int = 20, light_direction: str = "topLeft", invert_texture: bool = False) -> dict:
+    """
+    Applies Rough Pastels artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        stroke_length: Stroke length (0-40). Default 6.
+        stroke_detail: Detail (1-20). Default 4.
+        texture: 'brick', 'burlap', 'canvas', 'sandstone'. Default 'canvas'.
+        scaling: Texture scaling (50-200). Default 100.
+        relief: Relief depth (0-50). Default 20.
+        light_direction: 'topLeft', 'top', 'topRight', 'left', 'bottomLeft', 'bottom', 'bottomRight', 'right'. Default 'topLeft'.
+        invert_texture: Invert texture. Default False.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "roughPastels",
+        "strokeLength": stroke_length,
+        "strokeDetail": stroke_detail,
+        "texture": {"_enum": "texture", "_value": texture},
+        "scaling": scaling,
+        "relief": relief,
+        "lightDirection": {"_enum": "lightDirection", "_value": light_direction},
+        "invertTexture": invert_texture,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_smudge_stick(layer_id: int, stroke_length: int = 2, highlight_area: int = 12, intensity: int = 10) -> dict:
+    """
+    Applies Smudge Stick artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        stroke_length: Stroke length (0-10). Default 2.
+        highlight_area: Highlight area (0-20). Default 12.
+        intensity: Intensity (0-10). Default 10.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "smudgeStick",
+        "strokeLength": stroke_length,
+        "highlightArea": highlight_area,
+        "intensity": intensity,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_sponge_filter(layer_id: int, brush_size: int = 2, definition: int = 12, smoothness: int = 5) -> dict:
+    """
+    Applies Sponge artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        brush_size: Brush size (0-10). Default 2.
+        definition: Definition (0-25). Default 12.
+        smoothness: Smoothness (1-15). Default 5.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "sponge",
+        "brushSize": brush_size,
+        "definition": definition,
+        "smoothness": smoothness,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_underpainting(layer_id: int, brush_size: int = 2, texture_coverage: int = 1, texture: str = "canvas", scaling: int = 100, relief: int = 4, light_direction: str = "topLeft", invert_texture: bool = False) -> dict:
+    """
+    Applies Underpainting artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        brush_size: Brush size (0-40). Default 2.
+        texture_coverage: Texture coverage (0-40). Default 1.
+        texture: 'brick', 'burlap', 'canvas', 'sandstone'. Default 'canvas'.
+        scaling: Texture scaling (50-200). Default 100.
+        relief: Relief depth (0-50). Default 4.
+        light_direction: Light direction. Default 'topLeft'.
+        invert_texture: Invert texture. Default False.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "underpainting",
+        "brushSize": brush_size,
+        "textureCoverage": texture_coverage,
+        "texture": {"_enum": "texture", "_value": texture},
+        "scaling": scaling,
+        "relief": relief,
+        "lightDirection": {"_enum": "lightDirection", "_value": light_direction},
+        "invertTexture": invert_texture,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_watercolor(layer_id: int, brush_detail: int = 14, shadow_intensity: int = 0, texture: int = 1) -> dict:
+    """
+    Applies Watercolor artistic filter.
+
+    Args:
+        layer_id: ID of the layer
+        brush_detail: Brush detail (1-14). Default 14.
+        shadow_intensity: Shadow intensity (0-10). Default 0.
+        texture: Texture (1-3). Default 1.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "watercolor",
+        "brushDetail": brush_detail,
+        "shadowIntensity": shadow_intensity,
+        "texture": texture,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# SKETCH FILTERS
+# =============================================================================
+
+@mcp.tool()
+def apply_bas_relief(layer_id: int, detail: int = 13, smoothness: int = 3, light_direction: str = "bottomLeft") -> dict:
+    """
+    Applies Bas Relief sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        detail: Detail (1-15). Default 13.
+        smoothness: Smoothness (1-15). Default 3.
+        light_direction: Light direction. Default 'bottomLeft'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "basRelief",
+        "detail": detail,
+        "smoothness": smoothness,
+        "lightDirection": {"_enum": "lightDirection", "_value": light_direction},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_chalk_and_charcoal(layer_id: int, chalk_area: int = 6, charcoal_area: int = 6, stroke_pressure: int = 1) -> dict:
+    """
+    Applies Chalk & Charcoal sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        chalk_area: Chalk area (0-20). Default 6.
+        charcoal_area: Charcoal area (0-20). Default 6.
+        stroke_pressure: Stroke pressure (0-5). Default 1.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "chalkCharcoal",
+        "chalkArea": chalk_area,
+        "charcoalArea": charcoal_area,
+        "strokePressure": stroke_pressure,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_charcoal(layer_id: int, charcoal_thickness: int = 1, detail: int = 5, light_dark_balance: int = 50) -> dict:
+    """
+    Applies Charcoal sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        charcoal_thickness: Thickness (1-7). Default 1.
+        detail: Detail (0-5). Default 5.
+        light_dark_balance: Balance (0-100). Default 50.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "charcoal",
+        "charcoalThickness": charcoal_thickness,
+        "detail": detail,
+        "lightDarkBalance": light_dark_balance,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_graphic_pen(layer_id: int, stroke_length: int = 15, light_dark_balance: int = 50, stroke_direction: str = "rightDiagonal") -> dict:
+    """
+    Applies Graphic Pen sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        stroke_length: Stroke length (1-15). Default 15.
+        light_dark_balance: Balance (0-100). Default 50.
+        stroke_direction: 'rightDiagonal', 'horizontal', 'leftDiagonal', 'vertical'. Default 'rightDiagonal'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "graphicPen",
+        "strokeLength": stroke_length,
+        "lightDarkBalance": light_dark_balance,
+        "strokeDirection": {"_enum": "strokeDirection", "_value": stroke_direction},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_halftone_pattern(layer_id: int, size: int = 1, contrast: int = 5, pattern_type: str = "dot") -> dict:
+    """
+    Applies Halftone Pattern sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        size: Pattern size (1-12). Default 1.
+        contrast: Contrast (0-50). Default 5.
+        pattern_type: 'dot', 'circle', or 'line'. Default 'dot'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "halftoneScreen",
+        "size": size,
+        "contrast": contrast,
+        "halftoneScreenPatternType": {"_enum": "halftoneScreenPatternType", "_value": pattern_type},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_note_paper(layer_id: int, image_balance: int = 25, graininess: int = 10, relief: int = 11) -> dict:
+    """
+    Applies Note Paper sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        image_balance: Image balance (0-50). Default 25.
+        graininess: Graininess (0-20). Default 10.
+        relief: Relief (0-25). Default 11.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "notePaper",
+        "imageBalance": image_balance,
+        "graininess": graininess,
+        "relief": relief,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_photocopy(layer_id: int, detail: int = 7, darkness: int = 8) -> dict:
+    """
+    Applies Photocopy sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        detail: Detail (1-24). Default 7.
+        darkness: Darkness (1-50). Default 8.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "photocopy",
+        "detail": detail,
+        "darkness": darkness,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_plaster(layer_id: int, image_balance: int = 20, smoothness: int = 2, light_direction: str = "topLeft") -> dict:
+    """
+    Applies Plaster sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        image_balance: Image balance (0-50). Default 20.
+        smoothness: Smoothness (1-15). Default 2.
+        light_direction: Light direction. Default 'topLeft'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "plaster",
+        "imageBalance": image_balance,
+        "smoothness": smoothness,
+        "lightDirection": {"_enum": "lightDirection", "_value": light_direction},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_reticulation(layer_id: int, density: int = 12, foreground_level: int = 40, background_level: int = 5) -> dict:
+    """
+    Applies Reticulation sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        density: Density (0-50). Default 12.
+        foreground_level: Foreground level (0-50). Default 40.
+        background_level: Background level (0-50). Default 5.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "reticulation",
+        "density": density,
+        "foregroundLevel": foreground_level,
+        "backgroundLevel": background_level,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_stamp_filter(layer_id: int, light_dark_balance: int = 25, smoothness: int = 5) -> dict:
+    """
+    Applies Stamp sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        light_dark_balance: Balance (0-50). Default 25.
+        smoothness: Smoothness (1-50). Default 5.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "stamp",
+        "lightDarkBalance": light_dark_balance,
+        "smoothness": smoothness,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_torn_edges(layer_id: int, image_balance: int = 25, smoothness: int = 11, contrast: int = 17) -> dict:
+    """
+    Applies Torn Edges sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        image_balance: Image balance (0-50). Default 25.
+        smoothness: Smoothness (1-15). Default 11.
+        contrast: Contrast (1-25). Default 17.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "tornEdges",
+        "imageBalance": image_balance,
+        "smoothness": smoothness,
+        "contrast": contrast,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_water_paper(layer_id: int, fiber_length: int = 15, brightness: int = 60, contrast: int = 80) -> dict:
+    """
+    Applies Water Paper sketch filter.
+
+    Args:
+        layer_id: ID of the layer
+        fiber_length: Fiber length (3-50). Default 15.
+        brightness: Brightness (0-100). Default 60.
+        contrast: Contrast (0-100). Default 80.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "waterPaper",
+        "fiberLength": fiber_length,
+        "brightness": brightness,
+        "contrast": contrast,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# BRUSH STROKE FILTERS
+# =============================================================================
+
+@mcp.tool()
+def apply_accented_edges(layer_id: int, edge_width: int = 2, edge_brightness: int = 38, smoothness: int = 5) -> dict:
+    """
+    Applies Accented Edges brush stroke filter.
+
+    Args:
+        layer_id: ID of the layer
+        edge_width: Edge width (1-14). Default 2.
+        edge_brightness: Edge brightness (0-50). Default 38.
+        smoothness: Smoothness (1-15). Default 5.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "accentedEdges",
+        "edgeWidth": edge_width,
+        "edgeBrightness": edge_brightness,
+        "smoothness": smoothness,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_angled_strokes(layer_id: int, direction_balance: int = 50, stroke_length: int = 15, sharpness: int = 3) -> dict:
+    """
+    Applies Angled Strokes brush stroke filter.
+
+    Args:
+        layer_id: ID of the layer
+        direction_balance: Direction balance (0-100). Default 50.
+        stroke_length: Stroke length (3-50). Default 15.
+        sharpness: Sharpness (0-10). Default 3.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "angledStrokes",
+        "directionBalance": direction_balance,
+        "strokeLength": stroke_length,
+        "sharpness": sharpness,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_crosshatch(layer_id: int, stroke_length: int = 9, sharpness: int = 6, strength: int = 1) -> dict:
+    """
+    Applies Crosshatch brush stroke filter.
+
+    Args:
+        layer_id: ID of the layer
+        stroke_length: Stroke length (3-50). Default 9.
+        sharpness: Sharpness (0-20). Default 6.
+        strength: Strength (1-3). Default 1.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "crosshatch",
+        "strokeLength": stroke_length,
+        "sharpness": sharpness,
+        "strength": strength,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_dark_strokes(layer_id: int, balance: int = 5, black_intensity: int = 6, white_intensity: int = 2) -> dict:
+    """
+    Applies Dark Strokes brush stroke filter.
+
+    Args:
+        layer_id: ID of the layer
+        balance: Balance (0-10). Default 5.
+        black_intensity: Black intensity (0-10). Default 6.
+        white_intensity: White intensity (0-10). Default 2.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "darkStrokes",
+        "balance": balance,
+        "blackIntensity": black_intensity,
+        "whiteIntensity": white_intensity,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_ink_outlines(layer_id: int, stroke_length: int = 4, dark_intensity: int = 20, light_intensity: int = 10) -> dict:
+    """
+    Applies Ink Outlines brush stroke filter.
+
+    Args:
+        layer_id: ID of the layer
+        stroke_length: Stroke length (1-50). Default 4.
+        dark_intensity: Dark intensity (0-50). Default 20.
+        light_intensity: Light intensity (0-50). Default 10.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "inkOutlines",
+        "strokeLength": stroke_length,
+        "darkIntensity": dark_intensity,
+        "lightIntensity": light_intensity,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_spatter(layer_id: int, spray_radius: int = 10, smoothness: int = 5) -> dict:
+    """
+    Applies Spatter brush stroke filter.
+
+    Args:
+        layer_id: ID of the layer
+        spray_radius: Spray radius (0-25). Default 10.
+        smoothness: Smoothness (1-15). Default 5.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "spatter",
+        "sprayRadius": spray_radius,
+        "smoothness": smoothness,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_sprayed_strokes(layer_id: int, stroke_length: int = 12, spray_radius: int = 7, stroke_direction: str = "rightDiagonal") -> dict:
+    """
+    Applies Sprayed Strokes brush stroke filter.
+
+    Args:
+        layer_id: ID of the layer
+        stroke_length: Stroke length (0-20). Default 12.
+        spray_radius: Spray radius (0-25). Default 7.
+        stroke_direction: 'rightDiagonal', 'horizontal', 'leftDiagonal', 'vertical'. Default 'rightDiagonal'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "sprayedStrokes",
+        "strokeLength": stroke_length,
+        "sprayRadius": spray_radius,
+        "strokeDirection": {"_enum": "strokeDirection", "_value": stroke_direction},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_sumi_e(layer_id: int, stroke_width: int = 3, stroke_pressure: int = 2, contrast: int = 16) -> dict:
+    """
+    Applies Sumi-e brush stroke filter.
+
+    Args:
+        layer_id: ID of the layer
+        stroke_width: Stroke width (3-15). Default 3.
+        stroke_pressure: Stroke pressure (0-15). Default 2.
+        contrast: Contrast (0-40). Default 16.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "sumie",
+        "strokeWidth": stroke_width,
+        "strokePressure": stroke_pressure,
+        "contrast": contrast,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# TEXTURE FILTERS
+# =============================================================================
+
+@mcp.tool()
+def apply_craquelure(layer_id: int, crack_spacing: int = 15, crack_depth: int = 6, crack_brightness: int = 9) -> dict:
+    """
+    Applies Craquelure texture filter.
+
+    Args:
+        layer_id: ID of the layer
+        crack_spacing: Spacing (2-100). Default 15.
+        crack_depth: Depth (1-10). Default 6.
+        crack_brightness: Brightness (0-10). Default 9.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "craquelure",
+        "crackSpacing": crack_spacing,
+        "crackDepth": crack_depth,
+        "crackBrightness": crack_brightness,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_grain(layer_id: int, intensity: int = 40, contrast: int = 50, grain_type: str = "regular") -> dict:
+    """
+    Applies Grain texture filter.
+
+    Args:
+        layer_id: ID of the layer
+        intensity: Intensity (0-100). Default 40.
+        contrast: Contrast (0-100). Default 50.
+        grain_type: 'regular', 'soft', 'sprinkles', 'clumped', 'contrasty', 'enlarged', 'stippled', 'horizontal', 'vertical', 'speckle'. Default 'regular'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "grain",
+        "intensity": intensity,
+        "contrast": contrast,
+        "grainType": {"_enum": "grainType", "_value": grain_type},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_patchwork(layer_id: int, square_size: int = 2, relief: int = 5) -> dict:
+    """
+    Applies Patchwork texture filter.
+
+    Args:
+        layer_id: ID of the layer
+        square_size: Square size (0-10). Default 2.
+        relief: Relief (0-25). Default 5.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "patchwork",
+        "squareSize": square_size,
+        "relief": relief,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_stained_glass(layer_id: int, cell_size: int = 6, border_thickness: int = 4, light_intensity: int = 3) -> dict:
+    """
+    Applies Stained Glass texture filter.
+
+    Args:
+        layer_id: ID of the layer
+        cell_size: Cell size (2-50). Default 6.
+        border_thickness: Border thickness (1-20). Default 4.
+        light_intensity: Light intensity (0-10). Default 3.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "stainedGlass",
+        "cellSize": cell_size,
+        "borderThickness": border_thickness,
+        "lightIntensity": light_intensity,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_texturizer(layer_id: int, texture: str = "canvas", scaling: int = 100, relief: int = 4, light_direction: str = "topLeft", invert_texture: bool = False) -> dict:
+    """
+    Applies Texturizer texture filter.
+
+    Args:
+        layer_id: ID of the layer
+        texture: 'brick', 'burlap', 'canvas', 'sandstone'. Default 'canvas'.
+        scaling: Scaling (50-200). Default 100.
+        relief: Relief (0-50). Default 4.
+        light_direction: Light direction. Default 'topLeft'.
+        invert_texture: Invert. Default False.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "texturizer",
+        "texture": {"_enum": "texture", "_value": texture},
+        "scaling": scaling,
+        "relief": relief,
+        "lightDirection": {"_enum": "lightDirection", "_value": light_direction},
+        "invertTexture": invert_texture,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# PIXELATE FILTERS (missing ones)
+# =============================================================================
+
+@mcp.tool()
+def apply_facet(layer_id: int) -> dict:
+    """
+    Applies Facet pixelate filter. Groups similar pixels into flat-colored blocks.
+
+    Args:
+        layer_id: ID of the layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "facet", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_fragment(layer_id: int) -> dict:
+    """
+    Applies Fragment pixelate filter. Creates four offset copies for a motion effect.
+
+    Args:
+        layer_id: ID of the layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "fragment", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_mezzotint(layer_id: int, mezzotint_type: str = "mediumDots") -> dict:
+    """
+    Applies Mezzotint pixelate filter.
+
+    Args:
+        layer_id: ID of the layer
+        mezzotint_type: 'fineDots', 'mediumDots', 'grainyDots', 'coarseDots', 'shortLines', 'mediumLines', 'longLines', 'shortStrokes', 'mediumStrokes', 'longStrokes'. Default 'mediumDots'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "mezzotint",
+        "mezzotintType": {"_enum": "mezzotintType", "_value": mezzotint_type},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_pointillize(layer_id: int, cell_size: int = 5) -> dict:
+    """
+    Applies Pointillize pixelate filter. Creates a pointillist painting effect.
+
+    Args:
+        layer_id: ID of the layer
+        cell_size: Cell size (3-300). Default 5.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "pointillize",
+        "cellSize": cell_size,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# RENDER FILTERS
+# =============================================================================
+
+@mcp.tool()
+def apply_clouds(layer_id: int) -> dict:
+    """
+    Renders Clouds using foreground and background colors. Fills entire layer.
+
+    Args:
+        layer_id: ID of the layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "clouds", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_difference_clouds(layer_id: int) -> dict:
+    """
+    Renders Difference Clouds. Like clouds but blended with existing content using difference mode.
+
+    Args:
+        layer_id: ID of the layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "differenceClouds", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_fibers(layer_id: int, variance: int = 16, strength: int = 4) -> dict:
+    """
+    Renders Fibers using foreground and background colors.
+
+    Args:
+        layer_id: ID of the layer
+        variance: Variance (0-64). Default 16.
+        strength: Strength (0-10). Default 4.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "fibers",
+        "variance": variance,
+        "strength": strength,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_lens_flare(layer_id: int, brightness: int = 100, flare_center_x: int = 500, flare_center_y: int = 300, lens_type: str = "zoomLens") -> dict:
+    """
+    Renders Lens Flare effect.
+
+    Args:
+        layer_id: ID of the layer
+        brightness: Brightness (10-300). Default 100.
+        flare_center_x: Flare center X pixel coordinate. Default 500.
+        flare_center_y: Flare center Y pixel coordinate. Default 300.
+        lens_type: '50-300mmZoom' or 'zoomLens' or 'moviePrime' or '105mmPrime'. Default 'zoomLens'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "lensFlare",
+        "brightness": brightness,
+        "flareCenter": {
+            "_obj": "paint",
+            "horizontal": {"_unit": "pixelsUnit", "_value": flare_center_x},
+            "vertical": {"_unit": "pixelsUnit", "_value": flare_center_y}
+        },
+        "lensType": {"_enum": "lensType", "_value": lens_type},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# NOISE FILTERS (missing)
+# =============================================================================
+
+@mcp.tool()
+def apply_reduce_noise(layer_id: int, strength: int = 6, preserve_details: int = 60, reduce_color_noise: int = 60, sharpen_details: int = 25) -> dict:
+    """
+    Applies Reduce Noise filter.
+
+    Args:
+        layer_id: ID of the layer
+        strength: Noise reduction strength (0-10). Default 6.
+        preserve_details: Preserve details percent (0-100). Default 60.
+        reduce_color_noise: Color noise reduction (0-100). Default 60.
+        sharpen_details: Sharpen details (0-100). Default 25.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "denoise",
+        "strength": strength,
+        "preserveDetails": preserve_details,
+        "reduceColorNoise": reduce_color_noise,
+        "sharpenDetails": sharpen_details,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# OTHER FILTERS (Maximum, Minimum, Offset, Custom)
+# =============================================================================
+
+@mcp.tool()
+def apply_maximum(layer_id: int, radius: int = 1) -> dict:
+    """
+    Applies Maximum filter. Expands bright areas / shrinks dark areas.
+
+    Args:
+        layer_id: ID of the layer
+        radius: Radius in pixels (1-100). Default 1.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "maximum",
+        "radius": {"_unit": "pixelsUnit", "_value": float(radius)},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_minimum(layer_id: int, radius: int = 1) -> dict:
+    """
+    Applies Minimum filter. Shrinks bright areas / expands dark areas.
+
+    Args:
+        layer_id: ID of the layer
+        radius: Radius in pixels (1-100). Default 1.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "minimum",
+        "radius": {"_unit": "pixelsUnit", "_value": float(radius)},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_offset_filter(layer_id: int, horizontal: int = 0, vertical: int = 0, undefined_area: str = "wrapAround") -> dict:
+    """
+    Applies Offset filter. Shifts the layer content.
+
+    Args:
+        layer_id: ID of the layer
+        horizontal: Horizontal offset in pixels. Default 0.
+        vertical: Vertical offset in pixels. Default 0.
+        undefined_area: 'wrapAround', 'repeatEdgePixels', or 'setToTransparent'. Default 'wrapAround'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "offset",
+        "horizontal": {"_unit": "pixelsUnit", "_value": horizontal},
+        "vertical": {"_unit": "pixelsUnit", "_value": vertical},
+        "undefinedArea": {"_enum": "undefinedArea", "_value": undefined_area},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# ===================== NEW TOOLS BATCH 2: ADJUSTMENTS ========================
+# =============================================================================
+
+
+@mcp.tool()
+def apply_desaturate(layer_id: int) -> dict:
+    """
+    Applies Desaturate (Image > Adjustments > Desaturate). Removes all color.
+
+    Args:
+        layer_id: ID of the layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "desaturate", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_equalize(layer_id: int) -> dict:
+    """
+    Applies Equalize adjustment. Redistributes brightness values evenly.
+
+    Args:
+        layer_id: ID of the layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "equalize", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_invert_image(layer_id: int) -> dict:
+    """
+    Applies direct Invert to layer pixels (Image > Adjustments > Invert). Not an adjustment layer.
+
+    Args:
+        layer_id: ID of the layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "invert", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_posterize_direct(layer_id: int, levels: int = 4) -> dict:
+    """
+    Applies Posterize directly to layer pixels (not adjustment layer).
+
+    Args:
+        layer_id: ID of the layer
+        levels: Tonal levels (2-255). Default 4.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "posterize",
+        "levels": levels,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_threshold_direct(layer_id: int, level: int = 128) -> dict:
+    """
+    Applies Threshold directly to layer pixels (not adjustment layer).
+
+    Args:
+        layer_id: ID of the layer
+        level: Threshold level (1-255). Default 128.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "threshold",
+        "level": level,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_match_color(layer_id: int, luminance: int = 100, color_intensity: int = 100, fade: int = 0, neutralize: bool = False) -> dict:
+    """
+    Applies Match Color adjustment.
+
+    Args:
+        layer_id: ID of the layer
+        luminance: Luminance (1-200). Default 100.
+        color_intensity: Color intensity (1-200). Default 100.
+        fade: Fade amount (0-100). Default 0.
+        neutralize: Neutralize color cast. Default False.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "matchColor",
+        "luminance": luminance,
+        "colorIntensity": color_intensity,
+        "fade": fade,
+        "neutralize": neutralize,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_replace_color(layer_id: int, fuzziness: int = 40, hue: int = 0, saturation: int = 0, lightness: int = 0, sample_color_red: int = 255, sample_color_green: int = 0, sample_color_blue: int = 0) -> dict:
+    """
+    Applies Replace Color adjustment. Replaces a sampled color with new HSL values.
+
+    Args:
+        layer_id: ID of the layer
+        fuzziness: Color selection tolerance (0-200). Default 40.
+        hue: New hue shift (-180 to 180). Default 0.
+        saturation: New saturation (-100 to 100). Default 0.
+        lightness: New lightness (-100 to 100). Default 0.
+        sample_color_red: Sample color red (0-255). Default 255.
+        sample_color_green: Sample color green (0-255). Default 0.
+        sample_color_blue: Sample color blue (0-255). Default 0.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "replaceColor",
+        "fuzziness": fuzziness,
+        "hue": hue,
+        "saturation": saturation,
+        "lightness": lightness,
+        "color": {
+            "_obj": "RGBColor",
+            "red": sample_color_red,
+            "grain": sample_color_green,
+            "blue": sample_color_blue
+        },
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def add_color_lookup_adjustment_layer(layer_id: int, lut_name: str = "Crisp_Warm.look") -> dict:
+    """
+    Adds a Color Lookup (LUT) adjustment layer.
+
+    Args:
+        layer_id: ID of the layer to apply to
+        lut_name: Name of the LUT file (e.g., 'Crisp_Warm.look', 'EdgyAmber.3DL', 'FallColors.look', 'Filmstock_50.3DL', 'LateSunset.3DL', 'Moonlight.3DL', 'NightFromDay.CUBE', 'Teal_Orange_Plus_Contrast.look'). Default 'Crisp_Warm.look'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "make",
+        "_target": [{"_ref": "adjustmentLayer"}],
+        "using": {
+            "_obj": "adjustmentLayer",
+            "type": {
+                "_obj": "colorLookup",
+                "lookupType": {"_enum": "colorLookupType", "_value": "3DLUTFile"},
+                "name": lut_name
+            }
+        },
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# =================== NEW TOOLS BATCH 3: LAYER OPERATIONS ====================
+# =============================================================================
+
+
+@mcp.tool()
+def link_layers(layer_ids: list) -> dict:
+    """
+    Links multiple layers together so they move/transform as one.
+
+    Args:
+        layer_ids: List of layer IDs to link together.
+    """
+    targets = [{"_ref": "layer", "_id": lid} for lid in layer_ids]
+    # First select all layers
+    select_cmd = [{
+        "_obj": "select",
+        "_target": targets,
+        "makeVisible": False,
+        "selectionModifier": {"_enum": "selectionModifierType", "_value": "addToSelection"},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": select_cmd})
+    sendCommand(command)
+    # Then link
+    link_cmd = [{"_obj": "linkSelectedLayers", "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}], "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": link_cmd})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def unlink_layers(layer_ids: list) -> dict:
+    """
+    Unlinks multiple layers.
+
+    Args:
+        layer_ids: List of layer IDs to unlink.
+    """
+    targets = [{"_ref": "layer", "_id": lid} for lid in layer_ids]
+    select_cmd = [{
+        "_obj": "select",
+        "_target": targets,
+        "makeVisible": False,
+        "selectionModifier": {"_enum": "selectionModifierType", "_value": "addToSelection"},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": select_cmd})
+    sendCommand(command)
+    unlink_cmd = [{"_obj": "unlinkSelectedLayers", "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}], "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": unlink_cmd})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_layer_mask(layer_id: int) -> dict:
+    """
+    Applies (permanently merges) the layer mask into the layer pixels.
+
+    Args:
+        layer_id: ID of the layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "delete",
+        "_target": [{"_ref": "channel", "_enum": "channel", "_value": "mask"}],
+        "apply": True,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def enable_layer_mask(layer_id: int, enabled: bool = True) -> dict:
+    """
+    Enables or disables a layer mask without deleting it.
+
+    Args:
+        layer_id: ID of the layer
+        enabled: True to enable, False to disable. Default True.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "set",
+        "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}],
+        "to": {"_obj": "layer", "userMaskEnabled": enabled},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def copy_layer_effects(layer_id: int) -> dict:
+    """
+    Copies layer effects/styles from the specified layer to clipboard.
+
+    Args:
+        layer_id: ID of the source layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "copyEffects",
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def paste_layer_effects(layer_id: int) -> dict:
+    """
+    Pastes previously copied layer effects/styles onto the specified layer.
+
+    Args:
+        layer_id: ID of the target layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "pasteEffects",
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def add_pattern_fill_layer(pattern_name: str = "Bubbles", scale: int = 100) -> dict:
+    """
+    Creates a Pattern Fill layer.
+
+    Args:
+        pattern_name: Name of a built-in pattern. Default 'Bubbles'.
+        scale: Scale percentage (1-1000). Default 100.
+    """
+    commands = [{
+        "_obj": "make",
+        "_target": [{"_ref": "contentLayer"}],
+        "using": {
+            "_obj": "contentLayer",
+            "type": {
+                "_obj": "patternLayer",
+                "pattern": {"_obj": "pattern", "name": pattern_name},
+                "scale": {"_unit": "percentUnit", "_value": float(scale)}
+            }
+        },
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def add_gradient_fill_layer(angle: int = 90, gradient_type: str = "linear", scale: int = 100, reverse: bool = False, color_stops: list = None) -> dict:
+    """
+    Creates a Gradient Fill layer.
+
+    Args:
+        angle: Gradient angle (-180 to 180). Default 90.
+        gradient_type: 'linear', 'radial', 'angle', 'reflected', 'diamond'. Default 'linear'.
+        scale: Scale percentage (10-150). Default 100.
+        reverse: Reverse gradient. Default False.
+        color_stops: List of dicts with 'location' (0-4096), 'color' RGB dict. Default black-to-white.
+    """
+    if color_stops is None:
+        color_stops = [
+            {"location": 0, "color": {"red": 0, "green": 0, "blue": 0}},
+            {"location": 4096, "color": {"red": 255, "green": 255, "blue": 255}}
+        ]
+
+    cs_descriptors = []
+    for cs in color_stops:
+        c = cs["color"]
+        cs_descriptors.append({
+            "_obj": "colorStop",
+            "color": {"_obj": "RGBColor", "red": c["red"], "grain": c["green"], "blue": c["blue"]},
+            "location": cs["location"],
+            "midpoint": 50,
+            "type": {"_enum": "colorStopType", "_value": "userStop"}
+        })
+
+    commands = [{
+        "_obj": "make",
+        "_target": [{"_ref": "contentLayer"}],
+        "using": {
+            "_obj": "contentLayer",
+            "type": {
+                "_obj": "gradientLayer",
+                "angle": {"_unit": "angleUnit", "_value": float(angle)},
+                "type": {"_enum": "gradientType", "_value": gradient_type},
+                "scale": {"_unit": "percentUnit", "_value": float(scale)},
+                "reverse": reverse,
+                "gradient": {
+                    "_obj": "gradient",
+                    "colors": cs_descriptors,
+                    "gradientForm": {"_enum": "gradientForm", "_value": "customStops"}
+                }
+            }
+        },
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def lock_layer(layer_id: int, lock_all: bool = True) -> dict:
+    """
+    Locks or unlocks a layer.
+
+    Args:
+        layer_id: ID of the layer
+        lock_all: True to lock all, False to unlock. Default True.
+    """
+    _select_layer_bp(layer_id)
+    lock_value = "protectAll" if lock_all else "protectNone"
+    commands = [{
+        "_obj": "set",
+        "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}],
+        "to": {
+            "_obj": "layer",
+            "layerLocking": {
+                "_obj": "layerLocking",
+                "protectAll": lock_all
+            }
+        },
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def set_layer_color_tag(layer_id: int, color: str = "red") -> dict:
+    """
+    Sets the color tag label for a layer in the Layers panel.
+
+    Args:
+        layer_id: ID of the layer
+        color: 'none', 'red', 'orange', 'yellowColor', 'green', 'blue', 'violet', 'gray'. Default 'red'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "set",
+        "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}],
+        "to": {"_obj": "layer", "color": {"_enum": "color", "_value": color}},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# ==================== NEW TOOLS BATCH 4: SELECTIONS ==========================
+# =============================================================================
+
+
+@mcp.tool()
+def add_to_selection_rectangle(layer_id: int, top: int = 0, left: int = 0, bottom: int = 100, right: int = 100, feather: int = 0) -> dict:
+    """
+    Adds a rectangular area to the existing selection.
+
+    Args:
+        layer_id: ID of the layer
+        top: Top bound. Default 0.
+        left: Left bound. Default 0.
+        bottom: Bottom bound. Default 100.
+        right: Right bound. Default 100.
+        feather: Feather radius in pixels. Default 0.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "set",
+        "_target": [{"_ref": "channel", "_property": "selection"}],
+        "to": {
+            "_obj": "rectangle",
+            "top": {"_unit": "pixelsUnit", "_value": top},
+            "left": {"_unit": "pixelsUnit", "_value": left},
+            "bottom": {"_unit": "pixelsUnit", "_value": bottom},
+            "right": {"_unit": "pixelsUnit", "_value": right}
+        },
+        "selectionModifier": {"_enum": "selectionModifierType", "_value": "addToSelection"},
+        "feather": {"_unit": "pixelsUnit", "_value": float(feather)},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def subtract_from_selection_rectangle(layer_id: int, top: int = 0, left: int = 0, bottom: int = 100, right: int = 100, feather: int = 0) -> dict:
+    """
+    Subtracts a rectangular area from the existing selection.
+
+    Args:
+        layer_id: ID of the layer
+        top: Top bound. Default 0.
+        left: Left bound. Default 0.
+        bottom: Bottom bound. Default 100.
+        right: Right bound. Default 100.
+        feather: Feather radius in pixels. Default 0.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "set",
+        "_target": [{"_ref": "channel", "_property": "selection"}],
+        "to": {
+            "_obj": "rectangle",
+            "top": {"_unit": "pixelsUnit", "_value": top},
+            "left": {"_unit": "pixelsUnit", "_value": left},
+            "bottom": {"_unit": "pixelsUnit", "_value": bottom},
+            "right": {"_unit": "pixelsUnit", "_value": right}
+        },
+        "selectionModifier": {"_enum": "selectionModifierType", "_value": "removeFromSelection"},
+        "feather": {"_unit": "pixelsUnit", "_value": float(feather)},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def intersect_selection_rectangle(layer_id: int, top: int = 0, left: int = 0, bottom: int = 100, right: int = 100, feather: int = 0) -> dict:
+    """
+    Intersects a rectangular area with the existing selection.
+
+    Args:
+        layer_id: ID of the layer
+        top: Top bound. Default 0.
+        left: Left bound. Default 0.
+        bottom: Bottom bound. Default 100.
+        right: Right bound. Default 100.
+        feather: Feather radius in pixels. Default 0.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "set",
+        "_target": [{"_ref": "channel", "_property": "selection"}],
+        "to": {
+            "_obj": "rectangle",
+            "top": {"_unit": "pixelsUnit", "_value": top},
+            "left": {"_unit": "pixelsUnit", "_value": left},
+            "bottom": {"_unit": "pixelsUnit", "_value": bottom},
+            "right": {"_unit": "pixelsUnit", "_value": right}
+        },
+        "selectionModifier": {"_enum": "selectionModifierType", "_value": "intersectWith"},
+        "feather": {"_unit": "pixelsUnit", "_value": float(feather)},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def select_layer_transparency(layer_id: int) -> dict:
+    """
+    Loads a layer's transparency as a selection (Ctrl+click layer thumbnail).
+
+    Args:
+        layer_id: ID of the layer
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "set",
+        "_target": [{"_ref": "channel", "_property": "selection"}],
+        "to": {"_ref": "channel", "_enum": "channel", "_value": "transparencyEnum"},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def select_by_magic_wand(layer_id: int, x: int = 0, y: int = 0, tolerance: int = 32, contiguous: bool = True, anti_alias: bool = True, sample_all_layers: bool = False) -> dict:
+    """
+    Selects pixels using Magic Wand tool at a specific point.
+
+    Args:
+        layer_id: ID of the layer
+        x: X coordinate of click point. Default 0.
+        y: Y coordinate of click point. Default 0.
+        tolerance: Color tolerance (0-255). Default 32.
+        contiguous: Only select contiguous pixels. Default True.
+        anti_alias: Anti-alias edges. Default True.
+        sample_all_layers: Sample from all layers. Default False.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "set",
+        "_target": [{"_ref": "channel", "_property": "selection"}],
+        "to": {
+            "_obj": "point",
+            "horizontal": {"_unit": "pixelsUnit", "_value": x},
+            "vertical": {"_unit": "pixelsUnit", "_value": y}
+        },
+        "tolerance": tolerance,
+        "antiAlias": anti_alias,
+        "contiguous": contiguous,
+        "merged": sample_all_layers,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# =================== NEW TOOLS BATCH 5: TRANSFORMS ==========================
+# =============================================================================
+
+
+@mcp.tool()
+def apply_skew(layer_id: int, horizontal_skew: int = 0, vertical_skew: int = 0) -> dict:
+    """
+    Applies Skew transform to a layer.
+
+    Args:
+        layer_id: ID of the layer
+        horizontal_skew: Horizontal skew in degrees (-89 to 89). Default 0.
+        vertical_skew: Vertical skew in degrees (-89 to 89). Default 0.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "transform",
+        "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}],
+        "freeTransformCenterState": {"_enum": "quadCenterState", "_value": "QCSAverage"},
+        "skew": {
+            "_obj": "paint",
+            "horizontal": {"_unit": "angleUnit", "_value": float(horizontal_skew)},
+            "vertical": {"_unit": "angleUnit", "_value": float(vertical_skew)}
+        },
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# ================= NEW TOOLS BATCH 6: DRAWING/PAINTING ======================
+# =============================================================================
+
+
+@mcp.tool()
+def apply_dodge_tool(layer_id: int, x: int = 50, y: int = 50, brush_size: int = 100, exposure: int = 50, range_value: str = "midtones") -> dict:
+    """
+    Applies Dodge tool at a point (lightens area).
+
+    Args:
+        layer_id: ID of the layer
+        x: X coordinate. Default 50.
+        y: Y coordinate. Default 50.
+        brush_size: Brush diameter in pixels. Default 100.
+        exposure: Exposure percentage (1-100). Default 50.
+        range_value: 'shadows', 'midtones', or 'highlights'. Default 'midtones'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "dodge",
+        "position": {
+            "_obj": "paint",
+            "horizontal": {"_unit": "pixelsUnit", "_value": x},
+            "vertical": {"_unit": "pixelsUnit", "_value": y}
+        },
+        "to": {
+            "_obj": "paint",
+            "horizontal": {"_unit": "pixelsUnit", "_value": x},
+            "vertical": {"_unit": "pixelsUnit", "_value": y}
+        },
+        "diameter": {"_unit": "pixelsUnit", "_value": float(brush_size)},
+        "exposure": {"_unit": "percentUnit", "_value": float(exposure)},
+        "range": {"_enum": "range", "_value": range_value},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_burn_tool(layer_id: int, x: int = 50, y: int = 50, brush_size: int = 100, exposure: int = 50, range_value: str = "midtones") -> dict:
+    """
+    Applies Burn tool at a point (darkens area).
+
+    Args:
+        layer_id: ID of the layer
+        x: X coordinate. Default 50.
+        y: Y coordinate. Default 50.
+        brush_size: Brush diameter in pixels. Default 100.
+        exposure: Exposure percentage (1-100). Default 50.
+        range_value: 'shadows', 'midtones', or 'highlights'. Default 'midtones'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "burn",
+        "position": {
+            "_obj": "paint",
+            "horizontal": {"_unit": "pixelsUnit", "_value": x},
+            "vertical": {"_unit": "pixelsUnit", "_value": y}
+        },
+        "to": {
+            "_obj": "paint",
+            "horizontal": {"_unit": "pixelsUnit", "_value": x},
+            "vertical": {"_unit": "pixelsUnit", "_value": y}
+        },
+        "diameter": {"_unit": "pixelsUnit", "_value": float(brush_size)},
+        "exposure": {"_unit": "percentUnit", "_value": float(exposure)},
+        "range": {"_enum": "range", "_value": range_value},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_smudge_tool(layer_id: int, points: list = None, brush_size: int = 20, strength: int = 50) -> dict:
+    """
+    Applies Smudge tool along a path. Pushes pixels like finger painting.
+
+    Args:
+        layer_id: ID of the layer
+        points: List of {x, y} dicts defining the smudge path. Default short stroke.
+        brush_size: Brush size in pixels. Default 20.
+        strength: Strength (1-100). Default 50.
+    """
+    if points is None:
+        points = [{"x": 50, "y": 50}, {"x": 100, "y": 100}]
+
+    _select_layer_bp(layer_id)
+
+    path_points = [{
+        "_obj": "paint",
+        "horizontal": {"_unit": "pixelsUnit", "_value": p["x"]},
+        "vertical": {"_unit": "pixelsUnit", "_value": p["y"]}
+    } for p in points]
+
+    commands = [{
+        "_obj": "smudge",
+        "list": path_points,
+        "diameter": {"_unit": "pixelsUnit", "_value": float(brush_size)},
+        "strength": strength,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# ============== NEW TOOLS BATCH 7: DOCUMENT OPERATIONS ======================
+# =============================================================================
+
+
+@mcp.tool()
+def convert_color_mode(mode: str = "RGBColorMode") -> dict:
+    """
+    Converts the document color mode.
+
+    Args:
+        mode: Target mode: 'RGBColorMode', 'CMYKColorMode', 'grayscaleMode', 'labColorMode', 'bitmapMode'. Default 'RGBColorMode'.
+    """
+    commands = [{
+        "_obj": "convertMode",
+        "_target": [{"_ref": "document", "_enum": "ordinal", "_value": "first"}],
+        "to": {"_class": mode},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def define_pattern(pattern_name: str = "MyPattern") -> dict:
+    """
+    Defines the current selection or entire canvas as a pattern.
+
+    Args:
+        pattern_name: Name for the pattern. Default 'MyPattern'.
+    """
+    commands = [{
+        "_obj": "make",
+        "_target": [{"_ref": "pattern"}],
+        "name": pattern_name,
+        "using": {"_ref": "property", "_property": "selection", "_ref": "channel"},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def add_guide(position: int = 100, orientation: str = "horizontal") -> dict:
+    """
+    Adds a guide line to the document.
+
+    Args:
+        position: Position in pixels. Default 100.
+        orientation: 'horizontal' or 'vertical'. Default 'horizontal'.
+    """
+    commands = [{
+        "_obj": "make",
+        "_target": [{"_ref": "guide"}],
+        "new": {
+            "_obj": "guide",
+            "position": {"_unit": "pixelsUnit", "_value": float(position)},
+            "orientation": {"_enum": "orientation", "_value": orientation}
+        },
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def clear_all_guides() -> dict:
+    """
+    Removes all guides from the document.
+    """
+    commands = [{
+        "_obj": "delete",
+        "_target": [{"_ref": "guide", "_enum": "ordinal", "_value": "allEnum"}],
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def flatten_image() -> dict:
+    """
+    Flattens all layers into a single background layer (Image > Flatten Image).
+    """
+    commands = [{"_obj": "flattenImage", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# ============== NEW TOOLS BATCH 8: PATH OPERATIONS ==========================
+# =============================================================================
+
+
+@mcp.tool()
+def stroke_path(layer_id: int, brush_size: int = 5, color_red: int = 0, color_green: int = 0, color_blue: int = 0) -> dict:
+    """
+    Strokes the current work path with the brush tool.
+
+    Args:
+        layer_id: ID of the layer to paint on
+        brush_size: Brush size in pixels. Default 5.
+        color_red: Stroke color red (0-255). Default 0.
+        color_green: Stroke color green (0-255). Default 0.
+        color_blue: Stroke color blue (0-255). Default 0.
+    """
+    _select_layer_bp(layer_id)
+    # Set foreground color first
+    color_cmd = [{
+        "_obj": "set",
+        "_target": [{"_ref": "color", "_property": "foregroundColor"}],
+        "to": {"_obj": "RGBColor", "red": color_red, "grain": color_green, "blue": color_blue},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": color_cmd})
+    sendCommand(command)
+
+    commands = [{
+        "_obj": "strokePath",
+        "tool": {"_ref": "paintbrushTool"},
+        "diameter": {"_unit": "pixelsUnit", "_value": float(brush_size)},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def fill_path(layer_id: int, color_red: int = 255, color_green: int = 0, color_blue: int = 0, opacity: int = 100) -> dict:
+    """
+    Fills the current work path with a color.
+
+    Args:
+        layer_id: ID of the layer
+        color_red: Fill color red (0-255). Default 255.
+        color_green: Fill color green (0-255). Default 0.
+        color_blue: Fill color blue (0-255). Default 0.
+        opacity: Fill opacity (0-100). Default 100.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "fill",
+        "_target": [{"_ref": "path", "_enum": "ordinal", "_value": "targetEnum"}],
+        "using": {"_enum": "fillContents", "_value": "color"},
+        "color": {"_obj": "RGBColor", "red": color_red, "grain": color_green, "blue": color_blue},
+        "opacity": {"_unit": "percentUnit", "_value": float(opacity)},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def path_to_selection(feather: float = 0.0, anti_alias: bool = True) -> dict:
+    """
+    Converts the current work path to a selection.
+
+    Args:
+        feather: Feather radius in pixels. Default 0.0.
+        anti_alias: Anti-alias edges. Default True.
+    """
+    commands = [{
+        "_obj": "set",
+        "_target": [{"_ref": "channel", "_property": "selection"}],
+        "to": {"_ref": "path", "_enum": "ordinal", "_value": "targetEnum"},
+        "feather": {"_unit": "pixelsUnit", "_value": feather},
+        "antiAlias": anti_alias,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def selection_to_path(tolerance: float = 2.0) -> dict:
+    """
+    Converts the current selection to a work path.
+
+    Args:
+        tolerance: Path tolerance (0.5-10). Lower = more accurate. Default 2.0.
+    """
+    commands = [{
+        "_obj": "make",
+        "_target": [{"_ref": "path"}],
+        "from": {"_ref": "channel", "_property": "selection"},
+        "tolerance": {"_unit": "pixelsUnit", "_value": tolerance},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def delete_path() -> dict:
+    """
+    Deletes the current work path.
+    """
+    commands = [{
+        "_obj": "delete",
+        "_target": [{"_ref": "path", "_enum": "ordinal", "_value": "targetEnum"}],
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# =============================================================================
+# ============== NEW TOOLS BATCH 9: UTILITY OPERATIONS =======================
+# =============================================================================
+
+
+@mcp.tool()
+def undo() -> dict:
+    """
+    Undoes the last action (Edit > Undo).
+    """
+    commands = [{"_obj": "select", "_target": [{"_ref": "historyState", "_offset": -1}], "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def redo() -> dict:
+    """
+    Redoes the last undone action (Edit > Redo).
+    """
+    commands = [{"_obj": "select", "_target": [{"_ref": "historyState", "_offset": 1}], "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def step_backward(steps: int = 1) -> dict:
+    """
+    Steps backward in history (Edit > Step Backward).
+
+    Args:
+        steps: Number of steps to go back. Default 1.
+    """
+    commands = [{"_obj": "select", "_target": [{"_ref": "historyState", "_offset": -1}], "_isCommand": True}] * steps
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def step_forward(steps: int = 1) -> dict:
+    """
+    Steps forward in history (Edit > Step Forward).
+
+    Args:
+        steps: Number of steps to go forward. Default 1.
+    """
+    commands = [{"_obj": "select", "_target": [{"_ref": "historyState", "_offset": 1}], "_isCommand": True}] * steps
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def fade_last_filter(opacity: int = 50, blend_mode: str = "normal") -> dict:
+    """
+    Fades the last applied filter (Edit > Fade). Must be called immediately after a filter.
+
+    Args:
+        opacity: Opacity percentage (0-100). Default 50.
+        blend_mode: Blend mode for the fade. Default 'normal'.
+    """
+    commands = [{
+        "_obj": "fade",
+        "opacity": {"_unit": "percentUnit", "_value": float(opacity)},
+        "mode": {"_enum": "blendMode", "_value": blend_mode},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def purge_all() -> dict:
+    """
+    Purges all caches (Edit > Purge > All). Frees memory.
+    """
+    commands = [{
+        "_obj": "purge",
+        "what": {"_enum": "purgeItem", "_value": "allEnum"},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def create_snapshot(snapshot_name: str = "Snapshot") -> dict:
+    """
+    Creates a history snapshot of the current document state.
+
+    Args:
+        snapshot_name: Name for the snapshot. Default 'Snapshot'.
+    """
+    commands = [{
+        "_obj": "make",
+        "_target": [{"_ref": "snapshotClass"}],
+        "name": snapshot_name,
+        "using": {"_enum": "historyState", "_value": "fullDocument"},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def set_layer_opacity(layer_id: int, opacity: int = 100) -> dict:
+    """
+    Sets layer opacity directly via batchPlay. Useful for quick opacity changes.
+
+    Args:
+        layer_id: ID of the layer
+        opacity: Opacity (0-100). Default 100.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "set",
+        "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}],
+        "to": {"_obj": "layer", "opacity": {"_unit": "percentUnit", "_value": float(opacity)}},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def set_layer_blend_mode(layer_id: int, blend_mode: str = "normal") -> dict:
+    """
+    Sets layer blend mode directly.
+
+    Args:
+        layer_id: ID of the layer
+        blend_mode: Blend mode (normal, dissolve, darken, multiply, colorBurn, linearBurn, darkerColor, lighten, screen, colorDodge, linearDodge, lighterColor, overlay, softLight, hardLight, vividLight, linearLight, pinLight, hardMix, difference, exclusion, subtract, divide, hue, saturation, color, luminosity). Default 'normal'.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{
+        "_obj": "set",
+        "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}],
+        "to": {"_obj": "layer", "mode": {"_enum": "blendMode", "_value": blend_mode}},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def close_document(save: bool = False) -> dict:
+    """
+    Closes the current document.
+
+    Args:
+        save: Whether to save before closing. Default False.
+    """
+    saving = "yes" if save else "no"
+    commands = [{
+        "_obj": "close",
+        "saving": {"_enum": "yesNo", "_value": saving},
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def duplicate_document_bp(document_name: str = "Copy") -> dict:
+    """
+    Duplicates the current document via batchPlay.
+
+    Args:
+        document_name: Name for the duplicate. Default 'Copy'.
+    """
+    commands = [{
+        "_obj": "duplicate",
+        "_target": [{"_ref": "document", "_enum": "ordinal", "_value": "first"}],
+        "name": document_name,
+        "_isCommand": True
+    }]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_image_size(width: int = 0, height: int = 0, resolution: int = 0, resample: bool = True) -> dict:
+    """
+    Resizes the image (Image > Image Size) via batchPlay.
+
+    Args:
+        width: New width in pixels (0 = unchanged). Default 0.
+        height: New height in pixels (0 = unchanged). Default 0.
+        resolution: New resolution in PPI (0 = unchanged). Default 0.
+        resample: Whether to resample. Default True.
+    """
+    desc = {"_obj": "imageSize", "constrainProportions": True, "_isCommand": True}
+    if width > 0:
+        desc["width"] = {"_unit": "pixelsUnit", "_value": float(width)}
+    if height > 0:
+        desc["height"] = {"_unit": "pixelsUnit", "_value": float(height)}
+    if resolution > 0:
+        desc["resolution"] = {"_unit": "densityUnit", "_value": float(resolution)}
+    desc["resample"] = resample
+
+    commands = [desc]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# ============================================================
+# BATCH 10: BLUR GALLERY FILTERS
+# ============================================================
+
+@mcp.tool()
+def apply_iris_blur(layer_id: int, blur_amount: float = 25.0, center_x: float = 500.0, center_y: float = 500.0) -> dict:
+    """
+    Applies Iris Blur (Blur Gallery) for depth-of-field with elliptical focus area.
+
+    Args:
+        layer_id: ID of the layer.
+        blur_amount: Blur intensity 0-500px. Default 25.
+        center_x: Focus center X coordinate. Default 500.
+        center_y: Focus center Y coordinate. Default 500.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "blurbTransform", "blurbWidgetType": 1, "blurbIrisBlurAmount": float(blur_amount), "blurbWidgetLocationX": float(center_x), "blurbWidgetLocationY": float(center_y), "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_tilt_shift_blur(layer_id: int, blur_amount: float = 30.0, focus_top: int = 300, focus_bottom: int = 500, feather_top: int = 100, feather_bottom: int = 100, angle: int = 0) -> dict:
+    """
+    Applies Tilt-Shift Blur (Blur Gallery) for miniature/diorama effect.
+
+    Args:
+        layer_id: ID of the layer.
+        blur_amount: Blur intensity 0-500px. Default 30.
+        focus_top: Top of in-focus band in pixels. Default 300.
+        focus_bottom: Bottom of in-focus band in pixels. Default 500.
+        feather_top: Feather distance above focus. Default 100.
+        feather_bottom: Feather distance below focus. Default 100.
+        angle: Rotation angle of the focus band. Default 0.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "blurbTransform", "blurbWidgetType": 2, "blurbTiltShiftBlurAmount": float(blur_amount), "blurbTiltShiftFocusTop": focus_top, "blurbTiltShiftFocusBottom": focus_bottom, "blurbTiltShiftFeatherTop": feather_top, "blurbTiltShiftFeatherBottom": feather_bottom, "blurbTiltShiftSymmetric": True, "blurbTiltShiftAngle": angle, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_spin_blur(layer_id: int, spin_angle: float = 15.0, center_x: float = 500.0, center_y: float = 500.0) -> dict:
+    """
+    Applies Spin Blur (Blur Gallery) for rotational motion blur.
+
+    Args:
+        layer_id: ID of the layer.
+        spin_angle: Spin angle 0-360 degrees. Default 15.
+        center_x: Spin center X. Default 500.
+        center_y: Spin center Y. Default 500.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "blurbTransform", "blurbWidgetType": 3, "blurbSpinBlurAngle": float(spin_angle), "blurbWidgetLocationX": float(center_x), "blurbWidgetLocationY": float(center_y), "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_path_blur(layer_id: int, blur_speed: float = 50.0) -> dict:
+    """
+    Applies Path Blur (Blur Gallery) for directional motion along a path.
+
+    Args:
+        layer_id: ID of the layer.
+        blur_speed: Speed of motion blur 0-500. Default 50.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "blurbTransform", "blurbWidgetType": 4, "blurbPathBlurSpeed": float(blur_speed), "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# ============================================================
+# BATCH 11: DRAWING / RETOUCHING TOOLS
+# ============================================================
+
+@mcp.tool()
+def apply_clone_stamp(layer_id: int, source_x: int = 0, source_y: int = 0, dest_x: int = 50, dest_y: int = 50, brush_size: int = 50, opacity: int = 100, hardness: int = 100) -> dict:
+    """
+    Applies Clone Stamp tool - clones pixels from source to destination point.
+
+    Args:
+        layer_id: ID of the layer to clone on.
+        source_x: Source X coordinate. Default 0.
+        source_y: Source Y coordinate. Default 0.
+        dest_x: Destination X coordinate. Default 50.
+        dest_y: Destination Y coordinate. Default 50.
+        brush_size: Brush diameter 1-5000. Default 50.
+        opacity: Opacity 1-100. Default 100.
+        hardness: Hardness 0-100. Default 100.
+    """
+    _select_layer_bp(layer_id)
+    commands = [
+        {"_obj": "set", "_target": [{"_ref": "cloneStampTool"}], "to": {"_obj": "cloneStampTool", "opacity": {"_unit": "percentUnit", "_value": opacity}, "flow": {"_unit": "percentUnit", "_value": 100}, "brush": {"_obj": "brush", "diameter": {"_unit": "pixelsUnit", "_value": float(brush_size)}, "hardness": {"_unit": "percentUnit", "_value": hardness}}}, "_isCommand": True},
+        {"_obj": "setd", "_target": [{"_ref": "paintBrushTool"}], "source": {"_enum": "sourceType", "_value": "samplePoint"}, "offset": {"_obj": "point", "horizontal": {"_unit": "pixelsUnit", "_value": float(source_x)}, "vertical": {"_unit": "pixelsUnit", "_value": float(source_y)}}, "_isCommand": True},
+        {"_obj": "paint", "_target": [{"_ref": "paintBrushTool"}], "from": {"_obj": "point", "horizontal": {"_unit": "pixelsUnit", "_value": float(dest_x)}, "vertical": {"_unit": "pixelsUnit", "_value": float(dest_y)}}, "to": {"_obj": "point", "horizontal": {"_unit": "pixelsUnit", "_value": float(dest_x)}, "vertical": {"_unit": "pixelsUnit", "_value": float(dest_y)}}, "_isCommand": True}
+    ]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_healing_brush(layer_id: int, source_x: int = 0, source_y: int = 0, dest_x: int = 50, dest_y: int = 50, brush_size: int = 50) -> dict:
+    """
+    Applies Healing Brush - blends source texture with destination color/tone.
+
+    Args:
+        layer_id: ID of the layer.
+        source_x: Source X coordinate. Default 0.
+        source_y: Source Y coordinate. Default 0.
+        dest_x: Destination X coordinate. Default 50.
+        dest_y: Destination Y coordinate. Default 50.
+        brush_size: Brush diameter 1-5000. Default 50.
+    """
+    _select_layer_bp(layer_id)
+    commands = [
+        {"_obj": "select", "_target": [{"_ref": "healingBrushTool"}], "_isCommand": True},
+        {"_obj": "set", "_target": [{"_ref": "healingBrushTool"}], "to": {"_obj": "healingBrushTool", "brush": {"_obj": "brush", "diameter": {"_unit": "pixelsUnit", "_value": float(brush_size)}, "hardness": {"_unit": "percentUnit", "_value": 100}}}, "_isCommand": True}
+    ]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_spot_healing_brush(layer_id: int, points: list = None, brush_size: int = 30) -> dict:
+    """
+    Applies Spot Healing Brush - automatically removes blemishes/spots.
+
+    Args:
+        layer_id: ID of the layer.
+        points: List of {x, y} dicts defining spots to heal. Default [{x:50, y:50}].
+        brush_size: Brush diameter 1-5000. Default 30.
+    """
+    if points is None:
+        points = [{"x": 50, "y": 50}]
+    _select_layer_bp(layer_id)
+    commands = [
+        {"_obj": "select", "_target": [{"_ref": "spotHealingBrushTool"}], "_isCommand": True},
+        {"_obj": "set", "_target": [{"_ref": "spotHealingBrushTool"}], "to": {"_obj": "spotHealingBrushTool", "brush": {"_obj": "brush", "diameter": {"_unit": "pixelsUnit", "_value": float(brush_size)}}}, "_isCommand": True}
+    ]
+    for pt in points:
+        commands.append({"_obj": "paint", "from": {"_obj": "point", "horizontal": {"_unit": "pixelsUnit", "_value": float(pt["x"])}, "vertical": {"_unit": "pixelsUnit", "_value": float(pt["y"])}}, "to": {"_obj": "point", "horizontal": {"_unit": "pixelsUnit", "_value": float(pt["x"])}, "vertical": {"_unit": "pixelsUnit", "_value": float(pt["y"])}}, "_isCommand": True})
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_history_brush(layer_id: int, points: list = None, brush_size: int = 50, opacity: int = 100) -> dict:
+    """
+    Applies History Brush - paints from a previous history state.
+
+    Args:
+        layer_id: ID of the layer.
+        points: List of {x, y} point dicts defining brush path. Default [{x:50, y:50}].
+        brush_size: Brush diameter 1-5000. Default 50.
+        opacity: Opacity 1-100. Default 100.
+    """
+    if points is None:
+        points = [{"x": 50, "y": 50}]
+    _select_layer_bp(layer_id)
+    commands = [
+        {"_obj": "select", "_target": [{"_ref": "artHistoryBrushTool"}], "_isCommand": True},
+        {"_obj": "set", "_target": [{"_ref": "artHistoryBrushTool"}], "to": {"_obj": "artHistoryBrushTool", "opacity": {"_unit": "percentUnit", "_value": opacity}, "brush": {"_obj": "brush", "diameter": {"_unit": "pixelsUnit", "_value": float(brush_size)}}}, "_isCommand": True}
+    ]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_pattern_stamp(layer_id: int, points: list = None, brush_size: int = 50, opacity: int = 100) -> dict:
+    """
+    Applies Pattern Stamp tool - paints with a defined pattern.
+
+    Args:
+        layer_id: ID of the layer.
+        points: List of {x, y} dicts defining brush path. Default [{x:50, y:50}].
+        brush_size: Brush diameter 1-5000. Default 50.
+        opacity: Opacity 1-100. Default 100.
+    """
+    if points is None:
+        points = [{"x": 50, "y": 50}]
+    _select_layer_bp(layer_id)
+    commands = [
+        {"_obj": "select", "_target": [{"_ref": "patternStampTool"}], "_isCommand": True},
+        {"_obj": "set", "_target": [{"_ref": "patternStampTool"}], "to": {"_obj": "patternStampTool", "opacity": {"_unit": "percentUnit", "_value": opacity}, "brush": {"_obj": "brush", "diameter": {"_unit": "pixelsUnit", "_value": float(brush_size)}}}, "_isCommand": True}
+    ]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_mixer_brush(layer_id: int, points: list = None, brush_size: int = 50, wetness: int = 50, mix: int = 50, flow: int = 50) -> dict:
+    """
+    Applies Mixer Brush for realistic paint mixing on canvas.
+
+    Args:
+        layer_id: ID of the layer.
+        points: List of {x, y} point dicts. Default [{x:50, y:50}].
+        brush_size: Brush diameter 1-5000. Default 50.
+        wetness: Wetness 0-100. Default 50.
+        mix: Color mix 0-100. Default 50.
+        flow: Flow rate 1-100. Default 50.
+    """
+    if points is None:
+        points = [{"x": 50, "y": 50}]
+    _select_layer_bp(layer_id)
+    commands = [
+        {"_obj": "select", "_target": [{"_ref": "mixerBrushTool"}], "_isCommand": True},
+        {"_obj": "set", "_target": [{"_ref": "mixerBrushTool"}], "to": {"_obj": "mixerBrushTool", "wetness": {"_unit": "percentUnit", "_value": wetness}, "mix": {"_unit": "percentUnit", "_value": mix}, "flow": {"_unit": "percentUnit", "_value": flow}, "brush": {"_obj": "brush", "diameter": {"_unit": "pixelsUnit", "_value": float(brush_size)}}}, "_isCommand": True}
+    ]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# ============================================================
+# BATCH 12: ADVANCED SELECTION TOOLS
+# ============================================================
+
+@mcp.tool()
+def select_object(layer_id: int) -> dict:
+    """
+    Uses Object Selection tool to automatically detect and select the main object on the layer.
+
+    Args:
+        layer_id: ID of the layer containing the object to select.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "autoCutout", "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}], "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def select_by_quick_selection(layer_id: int, x: int = 50, y: int = 50, brush_size: int = 20) -> dict:
+    """
+    Uses Quick Selection tool to select area around a point.
+
+    Args:
+        layer_id: ID of the layer.
+        x: X coordinate to start selection. Default 50.
+        y: Y coordinate to start selection. Default 50.
+        brush_size: Selection brush size 1-500. Default 20.
+    """
+    _select_layer_bp(layer_id)
+    commands = [
+        {"_obj": "select", "_target": [{"_ref": "quickSelectTool"}], "_isCommand": True},
+        {"_obj": "set", "_target": [{"_ref": "quickSelectTool"}], "to": {"_obj": "quickSelectTool", "brush": {"_obj": "brush", "diameter": {"_unit": "pixelsUnit", "_value": float(brush_size)}}}, "_isCommand": True}
+    ]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def add_to_selection_ellipse(layer_id: int, bounds: dict = None, feather: int = 0) -> dict:
+    """
+    Adds an elliptical area to the current selection.
+
+    Args:
+        layer_id: ID of the layer.
+        bounds: Bounds dict {top, left, bottom, right}. Default {top:0, left:0, bottom:100, right:100}.
+        feather: Feather radius 0-1000. Default 0.
+    """
+    if bounds is None:
+        bounds = {"top": 0, "left": 0, "bottom": 100, "right": 100}
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "set", "_target": [{"_ref": "channel", "_property": "selection"}], "to": {"_obj": "ellipse", "top": {"_unit": "pixelsUnit", "_value": bounds["top"]}, "left": {"_unit": "pixelsUnit", "_value": bounds["left"]}, "bottom": {"_unit": "pixelsUnit", "_value": bounds["bottom"]}, "right": {"_unit": "pixelsUnit", "_value": bounds["right"]}}, "feather": {"_unit": "pixelsUnit", "_value": float(feather)}, "antiAlias": True, "selectionModifier": {"_enum": "selectionModifierType", "_value": "addToSelection"}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def subtract_from_selection_ellipse(layer_id: int, bounds: dict = None, feather: int = 0) -> dict:
+    """
+    Subtracts an elliptical area from the current selection.
+
+    Args:
+        layer_id: ID of the layer.
+        bounds: Bounds dict {top, left, bottom, right}. Default {top:0, left:0, bottom:100, right:100}.
+        feather: Feather radius 0-1000. Default 0.
+    """
+    if bounds is None:
+        bounds = {"top": 0, "left": 0, "bottom": 100, "right": 100}
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "set", "_target": [{"_ref": "channel", "_property": "selection"}], "to": {"_obj": "ellipse", "top": {"_unit": "pixelsUnit", "_value": bounds["top"]}, "left": {"_unit": "pixelsUnit", "_value": bounds["left"]}, "bottom": {"_unit": "pixelsUnit", "_value": bounds["bottom"]}, "right": {"_unit": "pixelsUnit", "_value": bounds["right"]}}, "feather": {"_unit": "pixelsUnit", "_value": float(feather)}, "antiAlias": True, "selectionModifier": {"_enum": "selectionModifierType", "_value": "removeFromSelection"}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def add_to_selection_polygon(layer_id: int, points: list = None, feather: int = 0) -> dict:
+    """
+    Adds a polygon area to the current selection.
+
+    Args:
+        layer_id: ID of the layer.
+        points: List of {x, y} dicts defining polygon vertices. Default triangle.
+        feather: Feather radius 0-1000. Default 0.
+    """
+    if points is None:
+        points = [{"x": 50, "y": 10}, {"x": 100, "y": 90}, {"x": 10, "y": 40}]
+    _select_layer_bp(layer_id)
+    point_list = [{"_obj": "point", "horizontal": {"_unit": "pixelsUnit", "_value": float(p["x"])}, "vertical": {"_unit": "pixelsUnit", "_value": float(p["y"])}} for p in points]
+    commands = [{"_obj": "set", "_target": [{"_ref": "channel", "_property": "selection"}], "to": {"_obj": "polygon", "points": point_list}, "feather": {"_unit": "pixelsUnit", "_value": float(feather)}, "antiAlias": True, "selectionModifier": {"_enum": "selectionModifierType", "_value": "addToSelection"}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def subtract_from_selection_polygon(layer_id: int, points: list = None, feather: int = 0) -> dict:
+    """
+    Subtracts a polygon area from the current selection.
+
+    Args:
+        layer_id: ID of the layer.
+        points: List of {x, y} dicts defining polygon vertices. Default triangle.
+        feather: Feather radius 0-1000. Default 0.
+    """
+    if points is None:
+        points = [{"x": 50, "y": 10}, {"x": 100, "y": 90}, {"x": 10, "y": 40}]
+    _select_layer_bp(layer_id)
+    point_list = [{"_obj": "point", "horizontal": {"_unit": "pixelsUnit", "_value": float(p["x"])}, "vertical": {"_unit": "pixelsUnit", "_value": float(p["y"])}} for p in points]
+    commands = [{"_obj": "set", "_target": [{"_ref": "channel", "_property": "selection"}], "to": {"_obj": "polygon", "points": point_list}, "feather": {"_unit": "pixelsUnit", "_value": float(feather)}, "antiAlias": True, "selectionModifier": {"_enum": "selectionModifierType", "_value": "removeFromSelection"}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# ============================================================
+# BATCH 13: SMART OBJECT & LAYER TYPE OPERATIONS
+# ============================================================
+
+@mcp.tool()
+def replace_smart_object_contents(layer_id: int, file_path: str = "") -> dict:
+    """
+    Replaces the contents of a Smart Object layer with a new file.
+
+    Args:
+        layer_id: ID of the Smart Object layer.
+        file_path: Absolute path to the replacement file.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "placedLayerReplaceContents", "null": {"_path": file_path, "_kind": "local"}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def rasterize_all_layers() -> dict:
+    """
+    Rasterizes all layers in the document.
+    """
+    commands = [{"_obj": "rasterizeAll", "_target": [{"_ref": "document", "_enum": "ordinal", "_value": "targetEnum"}], "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def convert_layer_to_frame(layer_id: int) -> dict:
+    """
+    Converts a layer to a frame layer (for animation timeline).
+
+    Args:
+        layer_id: ID of the layer.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "convertToFrameAnimation", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# ============================================================
+# BATCH 14: DOCUMENT & PROFILE OPERATIONS
+# ============================================================
+
+@mcp.tool()
+def assign_icc_profile(profile_name: str = "sRGB IEC61966-2.1") -> dict:
+    """
+    Assigns an ICC color profile to the document without converting colors.
+
+    Args:
+        profile_name: ICC profile name. Default "sRGB IEC61966-2.1".
+    """
+    commands = [{"_obj": "assignProfile", "profile": profile_name, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def convert_to_icc_profile(profile_name: str = "sRGB IEC61966-2.1", intent: str = "perceptual") -> dict:
+    """
+    Converts the document to a different ICC color profile, adjusting colors.
+
+    Args:
+        profile_name: Target ICC profile name. Default "sRGB IEC61966-2.1".
+        intent: Rendering intent - "perceptual", "saturation", "relativeColorimetric", "absoluteColorimetric". Default "perceptual".
+    """
+    commands = [{"_obj": "convertToProfile", "profile": profile_name, "intent": {"_enum": "intent", "_value": intent}, "blackPointCompensation": True, "dither": True, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def define_brush_preset(name: str = "Custom Brush") -> dict:
+    """
+    Defines a new brush preset from the current selection.
+
+    Args:
+        name: Name for the brush preset. Default "Custom Brush".
+    """
+    commands = [{"_obj": "make", "_target": [{"_ref": "brush"}], "name": name, "using": {"_ref": "channel", "_property": "selection"}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_image_composite(source_layer_name: str = "", target_layer_name: str = "", blend_mode: str = "subtract", scale: int = 2, offset: int = 128) -> dict:
+    """
+    Applies Image composite operation (Image > Apply Image) for frequency separation etc.
+
+    Args:
+        source_layer_name: Name of the source layer. Default "".
+        target_layer_name: Name of the target layer. Default "".
+        blend_mode: Blend calculation - "subtract", "add", "normal", "multiply", "screen". Default "subtract".
+        scale: Scale factor for subtract/add. Default 2.
+        offset: Offset for subtract/add (0-255). Default 128.
+    """
+    desc = {"_obj": "applyImageEvent", "_isCommand": True}
+    calc = {"_obj": "calculation", "calculation": {"_enum": "calculationType", "_value": blend_mode}}
+    if source_layer_name:
+        calc["to"] = {"_ref": [{"_ref": "channel", "_enum": "channel", "_value": "RGB"}, {"_ref": "layer", "_name": source_layer_name}]}
+    if blend_mode in ["subtract", "add"]:
+        calc["scale"] = scale
+        calc["offset"] = offset
+    desc["with"] = calc
+    if target_layer_name:
+        desc["_target"] = [{"_ref": "layer", "_name": target_layer_name}]
+    commands = [desc]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def calculations(source1_channel: str = "RGB", source2_channel: str = "RGB", blend_mode: str = "multiply", result: str = "newDocument") -> dict:
+    """
+    Performs Image > Calculations between channels.
+
+    Args:
+        source1_channel: First source channel - "RGB", "red", "green", "blue", "gray". Default "RGB".
+        source2_channel: Second source channel. Default "RGB".
+        blend_mode: Blend mode for calculation. Default "multiply".
+        result: Where to put result - "newDocument", "newChannel", "selection". Default "newDocument".
+    """
+    commands = [{"_obj": "imageCalculation", "source1": {"_ref": [{"_ref": "channel", "_enum": "channel", "_value": source1_channel}]}, "source2": {"_ref": [{"_ref": "channel", "_enum": "channel", "_value": source2_channel}]}, "calculation": {"_enum": "calculationType", "_value": blend_mode}, "result": {"_enum": "calculationResult", "_value": result}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# ============================================================
+# BATCH 15: CHANNEL OPERATIONS
+# ============================================================
+
+@mcp.tool()
+def split_channels() -> dict:
+    """
+    Splits the document into separate channel documents (Image > Mode > Split Channels).
+    Creates one document per channel.
+    """
+    commands = [{"_obj": "splitChannels", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def merge_channels(mode: str = "RGB") -> dict:
+    """
+    Merges separate channel documents back into one (Image > Mode > Merge Channels).
+
+    Args:
+        mode: Target color mode - "RGB", "CMYK", "Lab". Default "RGB".
+    """
+    commands = [{"_obj": "mergeChannels", "mode": {"_enum": "colorSpace", "_value": mode}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def duplicate_channel(channel_name: str = "Red") -> dict:
+    """
+    Duplicates a channel.
+
+    Args:
+        channel_name: Channel to duplicate - "Red", "Green", "Blue", "Alpha 1", etc. Default "Red".
+    """
+    commands = [{"_obj": "duplicate", "_target": [{"_ref": "channel", "_name": channel_name}], "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def set_channel_restrictions(layer_id: int, channels: list = None) -> dict:
+    """
+    Restricts painting/editing to specific color channels (for glitch effects etc).
+
+    Args:
+        layer_id: ID of the layer.
+        channels: List of channel names to restrict to, e.g. ["red"], ["red","green"], ["RGB"] for all. Default ["RGB"].
+    """
+    if channels is None:
+        channels = ["RGB"]
+    _select_layer_bp(layer_id)
+    chan_refs = [{"_ref": "channel", "_enum": "channel", "_value": c} for c in channels]
+    commands = [{"_obj": "set", "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}], "to": {"_obj": "layer", "channelRestrictions": chan_refs}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# ============================================================
+# BATCH 16: ACTIONS & AUTOMATION
+# ============================================================
+
+@mcp.tool()
+def play_action(action_name: str = "", action_set: str = "Default Actions") -> dict:
+    """
+    Plays a recorded Photoshop action by name.
+
+    Args:
+        action_name: Name of the action to play. Required.
+        action_set: Name of the action set containing the action. Default "Default Actions".
+    """
+    commands = [{"_obj": "play", "_target": [{"_ref": "action", "_name": action_name}, {"_ref": "actionSet", "_name": action_set}], "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def record_action_start(action_name: str = "New Action", action_set: str = "Default Actions") -> dict:
+    """
+    Starts recording a new action.
+
+    Args:
+        action_name: Name for the new action. Default "New Action".
+        action_set: Action set to record into. Default "Default Actions".
+    """
+    commands = [{"_obj": "make", "_target": [{"_ref": "action"}], "name": action_name, "using": {"_ref": "actionSet", "_name": action_set}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def record_action_stop() -> dict:
+    """
+    Stops recording the current action.
+    """
+    commands = [{"_obj": "stop", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# ============================================================
+# BATCH 17: STYLIZE FILTERS (missing ones)
+# ============================================================
+
+@mcp.tool()
+def apply_diffuse(layer_id: int, mode: str = "normal") -> dict:
+    """
+    Applies Diffuse stylize filter for softening effect.
+
+    Args:
+        layer_id: ID of the layer.
+        mode: Diffuse mode - "normal", "darkenOnly", "lightenOnly", "anisotropic". Default "normal".
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "diffuse", "mode": {"_enum": "diffuseMode", "_value": mode}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+# ============================================================
+# BATCH 18: ADDITIONAL UTILITY OPERATIONS
+# ============================================================
+
+@mcp.tool()
+def set_ruler_units(units: str = "pixels") -> dict:
+    """
+    Sets the ruler units for the document.
+
+    Args:
+        units: Unit type - "pixels", "inches", "centimeters", "millimeters", "points", "picas". Default "pixels".
+    """
+    unit_map = {"pixels": "pixelsUnit", "inches": "inchesUnit", "centimeters": "centimetersUnit", "millimeters": "millimetersUnit", "points": "pointsUnit", "picas": "picasUnit"}
+    commands = [{"_obj": "set", "_target": [{"_ref": "property", "_property": "unitsPrefs"}, {"_ref": "application"}], "to": {"_obj": "unitsPrefs", "rulerUnits": {"_enum": "rulerUnits", "_value": unit_map.get(units, "pixelsUnit")}}, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def fit_on_screen() -> dict:
+    """
+    Fits the document view to fill the screen (View > Fit on Screen).
+    """
+    commands = [{"_obj": "select", "_target": [{"_ref": "menuItemClass", "_enum": "menuItemType", "_value": "fitOnScreen"}], "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def zoom_to_100() -> dict:
+    """
+    Sets zoom to 100% actual pixels (View > Actual Pixels).
+    """
+    commands = [{"_obj": "select", "_target": [{"_ref": "menuItemClass", "_enum": "menuItemType", "_value": "actualPixels"}], "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def toggle_layer_effects_visibility(layer_id: int, visible: bool = True) -> dict:
+    """
+    Shows or hides all layer effects/styles on a layer.
+
+    Args:
+        layer_id: ID of the layer.
+        visible: True to show effects, False to hide. Default True.
+    """
+    _select_layer_bp(layer_id)
+    if visible:
+        commands = [{"_obj": "show", "_target": [{"_ref": "layerEffects"}], "_isCommand": True}]
+    else:
+        commands = [{"_obj": "hide", "_target": [{"_ref": "layerEffects"}], "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def create_layer_from_effects(layer_id: int) -> dict:
+    """
+    Converts layer effects to separate layers (Layer > Layer Style > Create Layers).
+
+    Args:
+        layer_id: ID of the layer with effects.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "newLayersFromVisible", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def ungroup_layers(group_layer_id: int) -> dict:
+    """
+    Ungroups a layer group, moving all children out.
+
+    Args:
+        group_layer_id: ID of the group layer to ungroup.
+    """
+    _select_layer_bp(group_layer_id)
+    commands = [{"_obj": "ungroupLayersEvent", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def select_linked_layers(layer_id: int) -> dict:
+    """
+    Selects all layers linked to the specified layer.
+
+    Args:
+        layer_id: ID of a linked layer.
+    """
+    _select_layer_bp(layer_id)
+    commands = [{"_obj": "selectLinked", "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_auto_blend_layers(blend_method: str = "panorama") -> dict:
+    """
+    Auto-blends selected layers (Edit > Auto-Blend Layers).
+
+    Args:
+        blend_method: "panorama" or "stackImages". Default "panorama".
+    """
+    commands = [{"_obj": "mergeAlignedLayers", "autoBlendType": {"_enum": "autoBlendType", "_value": blend_method}, "seamlessTones": True, "contentAware": True, "_isCommand": True}]
+    command = createCommand("executeBatchPlayCommand", {"commands": commands})
+    return sendCommand(command)
+
+
+@mcp.tool()
+def apply_auto_align_layers() -> dict:
+    """
+    Auto-aligns selected layers (Edit > Auto-Align Layers) using Auto projection.
+    """
+    commands = [{"_obj": "align", "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}], "alignmentType": {"_enum": "alignmentType", "_value": "auto"}, "_isCommand": True}]
     command = createCommand("executeBatchPlayCommand", {"commands": commands})
     return sendCommand(command)
 

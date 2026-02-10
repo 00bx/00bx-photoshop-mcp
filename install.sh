@@ -52,16 +52,31 @@ echo "Setting up proxy server..."
 cd "$INSTALL_DIR/adb-proxy-socket"
 npm install
 
-# Install OpenCode skill
-echo "Installing OpenCode skill..."
+# Install OpenCode skills (7 topic-based skills for on-demand loading)
+echo "Installing OpenCode skills..."
 OPENCODE_SKILLS_DIR="$HOME/.config/opencode/skills"
 mkdir -p "$OPENCODE_SKILLS_DIR"
 
-if [ -d "$PACKAGE_DIR/skills/photoshop-designer" ]; then
-    cp -r "$PACKAGE_DIR/skills/photoshop-designer" "$OPENCODE_SKILLS_DIR/"
-    echo "✅ Skill installed to: $OPENCODE_SKILLS_DIR/photoshop-designer"
+# Remove old monolithic skill if present (replaced by 7 split skills)
+if [ -d "$OPENCODE_SKILLS_DIR/photoshop-designer" ]; then
+    rm -rf "$OPENCODE_SKILLS_DIR/photoshop-designer"
+    echo "  Removed old monolithic photoshop-designer skill"
+fi
+
+SKILL_COUNT=0
+for skill_dir in ps-fundamentals ps-blend-modes ps-tool-catalog ps-batchplay ps-text-effects ps-photo-effects ps-advanced; do
+    if [ -d "$PACKAGE_DIR/skills/$skill_dir" ]; then
+        cp -r "$PACKAGE_DIR/skills/$skill_dir" "$OPENCODE_SKILLS_DIR/"
+        SKILL_COUNT=$((SKILL_COUNT + 1))
+    fi
+done
+
+if [ "$SKILL_COUNT" -eq 7 ]; then
+    echo "✅ All 7 Photoshop skills installed to: $OPENCODE_SKILLS_DIR/"
+    echo "   ps-fundamentals, ps-blend-modes, ps-tool-catalog, ps-batchplay,"
+    echo "   ps-text-effects, ps-photo-effects, ps-advanced"
 else
-    echo "⚠️  Skill files not found in package"
+    echo "⚠️  Only $SKILL_COUNT of 7 skill directories found in package"
 fi
 
 echo ""
