@@ -1,0 +1,31 @@
+{
+  "name": "00bx-photoshop-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Adobe Photoshop control via AI. 171 tools for design automation.",
+  "main": "index.js",
+  "bin": {
+    "00bx-photoshop-mcp-install": "./install.sh"
+  },
+  "scripts": {
+    "postinstall": "echo 'Run: 00bx-photoshop-mcp-install to complete setup'"
+  },
+  "keywords": [
+    "mcp",
+    "photoshop",
+    "adobe",
+    "ai",
+    "opencode",
+    "design",
+    "automation"
+  ],
+  "author": "00bx",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/00bx/00bx-photoshop-mcp.git"
+  },
+  "homepage": "https://github.com/00bx/00bx-photoshop-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/00bx/00bx-photoshop-mcp/issues"
+  }
+}

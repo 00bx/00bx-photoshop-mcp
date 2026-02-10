@@ -1,0 +1,74 @@
+{
+  "id": "Photoshop MCP Agent",
+  "name": "Photoshop MCP Agent",
+  "version": "0.85.3",
+  "main": "index.html",
+  "host": [
+    {
+      "app": "PS",
+      "minVersion": "26.0.0"
+    }
+  ],
+  "manifestVersion": 5,
+  "entrypoints": [
+    {
+      "type": "panel",
+      "id": "vanilla",
+      "minimumSize": {
+        "width": 300,
+        "height": 200
+      },
+      "maximumSize": {
+        "width": 300,
+        "height": 200
+      },
+      "preferredDockedSize": {
+        "width": 300,
+        "height": 200
+      },
+      "preferredFloatingSize": {
+        "width": 300,
+        "height": 200
+      },
+      "label": {
+        "default": "Photoshop MCP Agent"
+      }
+    }
+  ],
+  "requiredPermissions": {
+    "network": {
+      "domains": "all"
+    },
+    "localFileSystem": "fullAccess"
+  },
+  "icons": [
+    {
+      "width": 23,
+      "height": 23,
+      "path": "icons/dark@1x.png",
+      "scale": [1],
+      "theme": ["darkest", "dark", "medium"]
+    },
+    {
+      "width": 23,
+      "height": 23,
+      "path": "icons/dark@2x.png",
+      "scale": [2],
+      "theme": ["darkest", "dark", "medium"]
+    },
+    {
+      "width": 23,
+      "height": 23,
+      "path": "icons/light@1x.png",
+      "scale": [1],
+      "theme": ["lightest", "light"]
+    },
+    {
+      "width": 23,
+      "height": 23,
+      "path": "icons/light@2x.png",
+      "scale": [2],
+      "theme": ["lightest", "light"]
+    }
+  ]
+}
