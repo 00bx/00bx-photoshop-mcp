@@ -1,6 +1,6 @@
 {
   "name": "00bx-photoshop-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP server for Adobe Photoshop control via AI. 171 tools for design automation.",
   "main": "index.js",
   "bin": {
@@ -8,7 +8,7 @@
     "00bx-photoshop-mcp-install": "install.sh"
   },
   "scripts": {
-    "postinstall": "echo '========================================' && echo '  00bx-photoshop-mcp installed!' && echo '========================================' && echo '' && echo 'Run the installer to complete setup:' && echo '' && echo '  00bx-photoshop-mcp-install' && echo '' && echo 'Then follow the README for next steps.' && echo ''"
+    "postinstall": "echo '========================================' && echo '  00bx-photoshop-mcp installed!' && echo '========================================' && echo '' && echo 'Run the installer to complete setup:' && echo '' && echo '  00bx-photoshop-mcp-install' && echo '' && echo 'This will also install the OpenCode skill!' && echo ''"
   },
   "keywords": [
     "mcp",
@@ -43,6 +43,7 @@
     "mcp/",
     "uxp/",
     "adb-proxy-socket/",
+    "skills/",
     "install.sh",
     "README.md",
     "LICENSE"

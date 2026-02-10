@@ -32,6 +32,18 @@ echo "Setting up proxy server..."
 cd "$INSTALL_DIR/adb-proxy-socket"
 npm install
 
+# Install OpenCode skill
+echo "Installing OpenCode skill..."
+OPENCODE_SKILLS_DIR="$HOME/.config/opencode/skills"
+mkdir -p "$OPENCODE_SKILLS_DIR"
+
+if [ -d "$PACKAGE_DIR/skills/photoshop-designer" ]; then
+    cp -r "$PACKAGE_DIR/skills/photoshop-designer" "$OPENCODE_SKILLS_DIR/"
+    echo "✅ Skill installed to: $OPENCODE_SKILLS_DIR/photoshop-designer"
+else
+    echo "⚠️  Skill files not found in package"
+fi
+
 echo ""
 echo "✅ Installation complete!"
 echo ""
