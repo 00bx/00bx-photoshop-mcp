@@ -159,7 +159,11 @@ def configure(app=None, url=None, timeout=None):
         application = app
     if url:
         proxy_url = url
-    if timeout:
-        proxy_timeout = timeout
+    if timeout is not None:
+        # Handle case where timeout might be a dict (from MCP command args)
+        if isinstance(timeout, dict):
+            proxy_timeout = timeout.get('timeout', 20)
+        else:
+            proxy_timeout = timeout
     
     logger.log(f"Socket client configured: app={application}, url={proxy_url}, timeout={proxy_timeout}")

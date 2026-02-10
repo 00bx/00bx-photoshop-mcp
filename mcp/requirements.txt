@@ -3,3 +3,5 @@ python-socketio
 mcp
 requests
 websocket-client
+numpy
+pillow
