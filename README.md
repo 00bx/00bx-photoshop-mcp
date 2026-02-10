@@ -14,7 +14,7 @@ MCP server for Adobe Photoshop control via AI. Forked from [mikechambers/adb-mcp
 - **Text manipulation**
 - **Canvas operations**
 - **batchPlay execution** for unlimited Photoshop control
-- **🎨 OpenCode Skill included** - Automatic installation of photoshop-designer skill with exact effect recipes
+- **OpenCode Skill included** - Automatic installation of photoshop-designer skill with exact effect recipes
 
 ## Prerequisites
 
