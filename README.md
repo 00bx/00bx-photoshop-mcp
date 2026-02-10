@@ -30,10 +30,10 @@ This installs everything to `~/.00bx-photoshop-mcp/` and sets up Python + Node e
 
 ```bash
 cd ~/.00bx-photoshop-mcp/adb-proxy-socket
-npm start
+node proxy.js
 ```
 
-Keep this running in a terminal.
+Keep this running in a terminal (or run in background: `nohup node proxy.js > /tmp/ps-proxy.log 2>&1 &`).
 
 ### 2. Load the UXP plugin
 

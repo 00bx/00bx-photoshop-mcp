@@ -5,6 +5,7 @@
   "main": "proxy.js",
   "bin": "proxy.js",
   "scripts": {
+    "start": "node proxy.js",
     "build": "pkg ."
   },
   "author": "Mike Chambers",
