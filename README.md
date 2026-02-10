@@ -22,7 +22,7 @@ npm install -g 00bx-photoshop-mcp
 00bx-photoshop-mcp-install
 ```
 
-This installs to `~/.00bx-photoshop-mcp/` and sets up Python environment automatically.
+This installs everything to `~/.00bx-photoshop-mcp/` and sets up Python + Node environments automatically.
 
 ## Setup
 
@@ -30,7 +30,6 @@ This installs to `~/.00bx-photoshop-mcp/` and sets up Python environment automat
 
 ```bash
 cd ~/.00bx-photoshop-mcp/adb-proxy-socket
-npm install
 npm start
 ```
 
@@ -53,14 +52,14 @@ Edit `~/.config/opencode/opencode.json`:
   "mcp": {
     "adobe-photoshop": {
       "type": "local",
-      "command": ["/Users/YOUR_USERNAME/.00bx-photoshop-mcp/mcp/.venv/bin/python", "/Users/YOUR_USERNAME/.00bx-photoshop-mcp/mcp/ps-mcp.py"],
+      "command": ["~/.00bx-photoshop-mcp/mcp/.venv/bin/python", "~/.00bx-photoshop-mcp/mcp/ps-mcp.py"],
       "timeout": 30000
     }
   }
 }
 ```
 
-Replace `YOUR_USERNAME` with your actual username.
+OpenCode will expand `~` to your home directory automatically.
 
 ## Usage
 

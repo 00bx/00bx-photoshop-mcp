@@ -51,7 +51,7 @@ echo ""
 echo '  "mcp": {'
 echo '    "adobe-photoshop": {'
 echo '      "type": "local",'
-echo '      "command": ["'$INSTALL_DIR'/mcp/.venv/bin/python", "'$INSTALL_DIR'/mcp/ps-mcp.py"],'
+echo '      "command": ["~/.00bx-photoshop-mcp/mcp/.venv/bin/python", "~/.00bx-photoshop-mcp/mcp/ps-mcp.py"],'
 echo '      "timeout": 30000'
 echo '    }'
 echo '  }'
