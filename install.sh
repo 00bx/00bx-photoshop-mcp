@@ -15,7 +15,27 @@ mkdir -p "$INSTALL_DIR"
 
 # Copy files
 echo "Copying MCP server files..."
-cp -r "$PACKAGE_DIR/mcp" "$INSTALL_DIR/"
+
+# Remove existing installation if present to avoid permission issues
+if [ -d "$INSTALL_DIR/mcp" ]; then
+    rm -rf "$INSTALL_DIR/mcp"
+fi
+if [ -d "$INSTALL_DIR/uxp" ]; then
+    rm -rf "$INSTALL_DIR/uxp"
+fi
+if [ -d "$INSTALL_DIR/adb-proxy-socket" ]; then
+    rm -rf "$INSTALL_DIR/adb-proxy-socket"
+fi
+
+# Copy directories, excluding .venv if it exists in source
+if [ -d "$PACKAGE_DIR/mcp/.venv" ]; then
+    # Copy mcp without .venv
+    mkdir -p "$INSTALL_DIR/mcp"
+    find "$PACKAGE_DIR/mcp" -mindepth 1 -maxdepth 1 ! -name '.venv' -exec cp -r {} "$INSTALL_DIR/mcp/" \;
+else
+    cp -r "$PACKAGE_DIR/mcp" "$INSTALL_DIR/"
+fi
+
 cp -r "$PACKAGE_DIR/uxp" "$INSTALL_DIR/"
 cp -r "$PACKAGE_DIR/adb-proxy-socket" "$INSTALL_DIR/"
 

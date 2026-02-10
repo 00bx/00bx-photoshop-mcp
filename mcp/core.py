@@ -9,7 +9,7 @@ def init(app, socket):
     socket_client = socket
 
 
-def createCommand(action:str, options:dict) -> str:
+def createCommand(action:str, options:dict) -> dict:
     command = {
         "application":application,
         "action":action,

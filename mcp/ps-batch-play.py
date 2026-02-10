@@ -28,6 +28,7 @@ import base64
 import socket_client
 import sys
 import os
+import json
 
 FONT_LIMIT = 1000 #max number of font names to return to AI
 
@@ -48,7 +49,7 @@ socket_client.configure(
 init(APPLICATION, socket_client)
 
 @mcp.tool()
-def call_batch_play_command(commands: list):
+def call_batch_play_command(commands: str):
     """
     Executes arbitrary Photoshop batchPlay commands via MCP.
 
@@ -87,14 +88,20 @@ def call_batch_play_command(commands: list):
     if not commands:
         raise ValueError("commands cannot be empty.")
 
-    command = createCommand(
+    # Parse commands - handle both string and list input
+    if isinstance(commands, str):
+        import_commands = json.loads(commands)
+    else:
+        import_commands = commands
+
+    command_dict = createCommand(
         "executeBatchPlayCommand",
         {
-            "commands": commands
+            "commands": import_commands
         }
     )
 
-    return sendCommand(command)
+    return sendCommand(command_dict)
 
 
 @mcp.resource("config://get_instructions")
