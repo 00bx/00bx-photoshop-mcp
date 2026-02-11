@@ -67,7 +67,6 @@ Restart OpenCode. Done.
 | Text         | Single/multi-line, edit properties                                          |
 | Transforms   | Scale, rotate, flip, perspective, warp, content-aware scale                 |
 | Adjustments  | Brightness, hue/sat, curves, levels, color balance, vibrance                |
-| AI / Firefly | Generate image, generative fill, remove background, harmonize               |
 | Canvas       | Create, crop, resize, rotate, trim                                          |
 | Layers       | Create, duplicate, delete, group, merge, visibility, position               |
 | batchPlay    | Execute any Photoshop command directly                                      |
