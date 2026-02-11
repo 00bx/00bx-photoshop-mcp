@@ -440,8 +440,8 @@ def scale_layer(
         layer_id (int): ID of layer to be scaled.
         width (int): Percentage to scale horizontally.
         height (int): Percentage to scale vertically.
-        anchor_position (str): The anchor position to rotate around,
-        interpolation_method (str): Interpolation method to use when resampling the image
+        anchor_position (str): The anchor position to scale around. Valid values: TOPLEFT, TOPCENTER, TOPRIGHT, MIDDLELEFT, MIDDLECENTER, MIDDLERIGHT, BOTTOMLEFT, BOTTOMCENTER, BOTTOMRIGHT
+        interpolation_method (str): Interpolation method to use when resampling. Valid values: AUTOMATIC, BICUBIC, BICUBICAUTOMATIC, BICUBICSHARPER, BICUBICSMOOTHER, BILINEAR, NEARESTNEIGHBOR, PRESERVEDETAILS
     """
     
     command = createCommand("scaleLayer", {
@@ -465,10 +465,10 @@ def rotate_layer(
     """Rotates the layer with the specified ID.
 
     Args:
-        layer_id (int): ID of layer to be scaled.
+        layer_id (int): ID of layer to be rotated.
         angle (int): Angle (-359 to 359) to rotate the layer by in degrees
-        anchor_position (str): The anchor position to rotate around,
-        interpolation_method (str): Interpolation method to use when resampling the image
+        anchor_position (str): The anchor position to rotate around. Valid values: TOPLEFT, TOPCENTER, TOPRIGHT, MIDDLELEFT, MIDDLECENTER, MIDDLERIGHT, BOTTOMLEFT, BOTTOMCENTER, BOTTOMRIGHT
+        interpolation_method (str): Interpolation method to use when resampling. Valid values: AUTOMATIC, BICUBIC, BICUBICAUTOMATIC, BICUBICSHARPER, BICUBICSMOOTHER, BILINEAR, NEARESTNEIGHBOR, PRESERVEDETAILS
     """
     
     command = createCommand("rotateLayer", {
@@ -777,7 +777,7 @@ def select_subject(layer_id: int):
     which indicates whether any pixels were selected (e.g., if no subject was detected).
 
     Args:
-        layer_int (int): The name of that contains the image to select the subject from.
+        layer_id (int): The ID of the layer that contains the image to select the subject from.
     """
 
     
@@ -1002,7 +1002,7 @@ def translate_layer(
         Moves the layer with the specified ID on the X and Y axis by the specified number of pixels.
 
     Args:
-        layer_name (str): The name of the layer that should be moved.
+        layer_id (int): The ID of the layer that should be moved.
         x_offset (int): Amount to move on the horizontal axis. Negative values move the layer left, positive values right
         y_offset (int): Amount to move on the vertical axis. Negative values move the layer down, positive values up
     """
@@ -6442,20 +6442,39 @@ def set_layer_opacity(layer_id: int, opacity: int = 100) -> dict:
     return sendCommand(command)
 
 
+def _normalize_blend_mode_for_batchplay(value: str) -> str:
+    """Normalizes any blend mode format (UPPERCASE, camelCase, underscore, space) to correct batchPlay camelCase."""
+    _MAP = {
+        "NORMAL": "normal", "DISSOLVE": "dissolve", "DARKEN": "darken",
+        "MULTIPLY": "multiply", "COLORBURN": "colorBurn", "LINEARBURN": "linearBurn",
+        "DARKERCOLOR": "darkerColor", "LIGHTEN": "lighten", "SCREEN": "screen",
+        "COLORDODGE": "colorDodge", "LINEARDODGE": "linearDodge",
+        "LIGHTERCOLOR": "lighterColor", "OVERLAY": "overlay", "SOFTLIGHT": "softLight",
+        "HARDLIGHT": "hardLight", "VIVIDLIGHT": "vividLight", "LINEARLIGHT": "linearLight",
+        "PINLIGHT": "pinLight", "HARDMIX": "hardMix", "DIFFERENCE": "difference",
+        "EXCLUSION": "exclusion", "SUBTRACT": "subtract", "DIVIDE": "divide",
+        "HUE": "hue", "SATURATION": "saturation", "COLOR": "color",
+        "LUMINOSITY": "luminosity", "PASSTHROUGH": "passThrough",
+    }
+    key = value.replace(" ", "").replace("_", "").upper()
+    return _MAP.get(key, value)
+
+
 @mcp.tool()
-def set_layer_blend_mode(layer_id: int, blend_mode: str = "normal") -> dict:
+def set_layer_blend_mode(layer_id: int, blend_mode: str = "NORMAL") -> dict:
     """
     Sets layer blend mode directly.
 
     Args:
         layer_id: ID of the layer
-        blend_mode: Blend mode (normal, dissolve, darken, multiply, colorBurn, linearBurn, darkerColor, lighten, screen, colorDodge, linearDodge, lighterColor, overlay, softLight, hardLight, vividLight, linearLight, pinLight, hardMix, difference, exclusion, subtract, divide, hue, saturation, color, luminosity). Default 'normal'.
+        blend_mode: Blend mode. Valid values: NORMAL, DISSOLVE, DARKEN, MULTIPLY, COLORBURN, LINEARBURN, DARKERCOLOR, LIGHTEN, SCREEN, COLORDODGE, LINEARDODGE, LIGHTERCOLOR, OVERLAY, SOFTLIGHT, HARDLIGHT, VIVIDLIGHT, LINEARLIGHT, PINLIGHT, HARDMIX, DIFFERENCE, EXCLUSION, SUBTRACT, DIVIDE, HUE, SATURATION, COLOR, LUMINOSITY. Default 'NORMAL'.
     """
+    bp_mode = _normalize_blend_mode_for_batchplay(blend_mode)
     _select_layer_bp(layer_id)
     commands = [{
         "_obj": "set",
         "_target": [{"_ref": "layer", "_enum": "ordinal", "_value": "targetEnum"}],
-        "to": {"_obj": "layer", "mode": {"_enum": "blendMode", "_value": blend_mode}},
+        "to": {"_obj": "layer", "mode": {"_enum": "blendMode", "_value": bp_mode}},
         "_isCommand": True
     }]
     command = createCommand("executeBatchPlayCommand", {"commands": commands})

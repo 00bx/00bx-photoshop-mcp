@@ -1,6 +1,6 @@
 {
   "name": "00bx-photoshop-mcp",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "MCP server for Adobe Photoshop. 323 tools + 7 AI skills for design automation.",
   "main": "index.js",
   "bin": {
