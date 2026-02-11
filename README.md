@@ -1,5 +1,7 @@
 # 00bx-photoshop-mcp
 
+![00bx-photoshop-mcp](poster.jpg)
+
 MCP server for Adobe Photoshop. 323 tools + 7 AI skills for design automation via OpenCode.
 
 ## Install
